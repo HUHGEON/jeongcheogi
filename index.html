@@ -43,6 +43,9 @@
   td.sit{background:var(--g-soft);font-weight:700;width:150px;color:#134e2c;}
   td.k{background:var(--g-soft);font-weight:700;color:#134e2c;white-space:nowrap;}
   tbody tr:nth-child(even) td:not(.sit):not(.k){background:#fbfdfb;}
+  /* 표 가로 스크롤 래퍼 — 넘쳐도 페이지가 아닌 표 안에서만 스크롤 (JS가 모든 table을 감쌈) */
+  .tw{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0 6px;}
+  .tw>table{margin:0;}
 
   /* 쿼리/코드 */
   code,.q{font-family:'JetBrains Mono',monospace;}
@@ -97,7 +100,48 @@
 
   footer{color:var(--sub);font-size:12.5px;text-align:center;margin-top:10px;}
 
-  @media (max-width:760px){ nav.toc ul{columns:1;} td.sit{width:auto;} table.trace{font-size:11.5px;} }
+  /* ===== 모바일 반응형 ===== */
+  @media (max-width:760px){
+    .wrap{padding:13px 9px 60px;}
+    header.top{padding:18px 16px;border-radius:14px;margin-bottom:14px;}
+    header.top h1{font-size:20px;}
+    header.top .meta{font-size:12px;}
+    .legend{gap:7px 11px;font-size:11.5px;padding:8px 11px;}
+    nav.toc{padding:13px 14px;}
+    nav.toc ul{columns:1;padding-left:16px;font-size:13px;}
+    section{padding:15px 12px;border-radius:12px;margin-bottom:14px;}
+    h2.sec{font-size:18px;}
+    h2.sec[style*="17px"]{font-size:16px !important;}
+    h3.sub{font-size:14.5px;padding:6px 10px;}
+    h4{font-size:13.5px;}
+    p.desc{font-size:13px;}
+    /* 표: 키 컬럼 줄바꿈 허용 + 인라인 고정폭 해제 → 좁은 화면에서 안 삐져나감 */
+    table{font-size:12.5px;}
+    th,td{padding:6px 8px;}
+    td.k{white-space:normal;word-break:keep-all;}
+    th[style]{width:auto !important;}
+    td.sit{width:auto;}
+    table.trace{font-size:11px;}
+    table.trace th,table.trace td{padding:4px 5px;min-width:20px;}
+    .q{font-size:11.7px;}
+    .cmp,.steps,.cond{font-size:12px;}
+    details.bg .body{font-size:12.5px;}
+    /* 검색바 / 사이드바 좁은 화면 대응 */
+    #searchbar{padding:8px 10px;}
+    #searchBox{font-size:13px;padding:8px 11px;}
+    #searchbar .sbin{gap:6px;}
+    #searchbar button{padding:8px 9px;font-size:12.5px;}
+    #searchInfo{min-width:40px;font-size:12px;}
+    #sidenav{width:auto;left:10px;right:10px;top:56px;max-width:none;max-height:calc(100vh - 78px);}
+    #snToggle,#topBtn{width:46px;height:46px;font-size:19px;right:12px;}
+  }
+  @media (max-width:420px){
+    .wrap{padding:10px 7px 54px;}
+    section{padding:13px 10px;}
+    h2.sec{font-size:16.5px;}
+    table{font-size:12px;}
+    th,td{padding:5px 6px;}
+  }
   @media print{
     body{background:#fff;}
     section,nav.toc,header.top{break-inside:avoid;box-shadow:none;}
@@ -4122,6 +4166,18 @@ O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(2ⁿ) < O(n!)
   var sb=document.getElementById('searchBox'); if(sb) sb.addEventListener('input', function(){ if(this.value.trim()) expandAll(); });
   window.addEventListener('beforeprint', expandAll);
   if(location.hash) setTimeout(function(){ expandFor(location.hash); var t=document.getElementById(location.hash.slice(1)); if(t) t.scrollIntoView(); }, 90);
+})();
+</script>
+<script>
+/* 모든 표를 가로 스크롤 래퍼(.tw)로 감싸 모바일에서 표가 화면을 밀어내지 않게 함 */
+(function(){
+  var tables=document.querySelectorAll('.wrap table');
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i], p=t.parentNode;
+    if(p&&p.classList&&p.classList.contains('tw')) continue;
+    var d=document.createElement('div'); d.className='tw';
+    p.insertBefore(d,t); d.appendChild(t);
+  }
 })();
 </script>
 </body>
