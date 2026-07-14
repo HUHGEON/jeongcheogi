@@ -1783,61 +1783,102 @@
 <section id="des1-pattern">
   <h2 class="sec" style="font-size:17px;">1) 디자인 패턴 💯</h2>
 
-  <h4 id="des1-create">생성 패턴 <span class="note">(암기: 싱팩빌프앱)</span></h4>
+  <p class="desc"><b>GoF 23개</b> · 목적에 따라 <b>생성(5)·구조(7)·행위(11)</b>로 분류. 실기는 ① <b>설명→패턴 이름 쓰기</b> ② <b>분류 맞히기</b> ③ <b>헷갈리는 패턴 구별</b>이 핵심. 아래 표의 <span class="em">굵은 부분 = 문제에 그대로 나오는 결정 키워드</span>.</p>
+
+  <h4 id="des1-create">생성 패턴 (Creational) — 객체 <b>생성</b> 방식 <span class="note">(암기: 싱팩빌프앱)</span></h4>
   <table>
-    <thead><tr><th style="width:220px">패턴</th><th>핵심 키워드</th></tr></thead>
+    <thead><tr><th style="width:170px">패턴</th><th>핵심 의도 <span class="note">(굵은 곳 = 시험 키워드)</span></th></tr></thead>
     <tbody>
-      <tr><td class="k">싱글톤 (Singleton) ❗</td><td>객체(클래스, 인스턴스) 하나만 생성, 어디서든 참조</td></tr>
-      <tr><td class="k">팩토리 메서드 (Factory Method) ❗</td><td>상위 클래스 - 인터페이스만 정의 / 서브 클래스 - 실제 생성 담당</td></tr>
-      <tr><td class="k">빌더 (Builder)</td><td>동일 생성 절차, 다른 표현 결과, 텔레스코핑 패턴 문제해결</td></tr>
-      <tr><td class="k">프로토타입 (Prototype)</td><td>인스턴스 복제(복사), 필요한 부분만 수정</td></tr>
-      <tr><td class="k">앱스트랙트 팩토리 (Abstract Factory) ❗</td><td>조합을 만드는 인터페이스(API) 제공, Kit이라고 불림</td></tr>
+      <tr><td class="k">싱글톤 (Singleton) ❗</td><td>인스턴스를 <b>오직 하나만 생성</b>하고 <b>어디서든(전역) 참조·접근</b>. <span class="note">예: DB 커넥션 풀, 설정 관리자</span></td></tr>
+      <tr><td class="k">팩토리 메서드 (Factory Method) ❗</td><td>객체 생성 인터페이스는 <b>상위 클래스</b>가, <b>어떤 객체를 만들지는 서브(하위) 클래스가 결정</b>. <span class="note">= Virtual Constructor</span></td></tr>
+      <tr><td class="k">추상 팩토리 (Abstract Factory) ❗</td><td>구체 클래스 지정 없이 <b>서로 관련된 객체들의 묶음(제품군)</b>을 통째로 생성. <span class="note">= Kit</span></td></tr>
+      <tr><td class="k">빌더 (Builder)</td><td>복합 객체의 <b>생성 절차(과정)와 표현(결과)을 분리</b> → 같은 절차로 다른 표현. <span class="note">단계별 조립</span></td></tr>
+      <tr><td class="k">프로토타입 (Prototype)</td><td><b>원본(견본) 객체를 복제(clone)</b>해 생성 → 생성 비용 큰 객체 반복 생성 회피</td></tr>
     </tbody>
   </table>
 
-  <h4 id="des1-struct">구조 패턴 <span class="note">(암기: 어데퍼프 브플컴)</span></h4>
+  <h4 id="des1-struct">구조 패턴 (Structural) — 클래스·객체 <b>조합(구조)</b> <span class="note">(암기: 어데퍼프 브플컴)</span></h4>
   <table>
-    <thead><tr><th style="width:220px">패턴</th><th>핵심 키워드</th></tr></thead>
+    <thead><tr><th style="width:170px">패턴</th><th>핵심 의도 <span class="note">(굵은 곳 = 시험 키워드)</span></th></tr></thead>
     <tbody>
-      <tr><td class="k">어댑터 (Adapter) ❗</td><td>서로 다른 인터페이스 연결</td></tr>
-      <tr><td class="k">데코레이터 (Decorator)</td><td>기존코드 수정 안하고, 객체를 감싸서 기능 추가 + 확장</td></tr>
-      <tr><td class="k">퍼사드 (Facade)</td><td>단순한 인터페이스 제공, 결합도 낮춤</td></tr>
-      <tr><td class="k">프록시 (Proxy)</td><td>객체의 대리자가 대신 처리</td></tr>
-      <tr><td class="k">브리지 (Bridge)</td><td>기능 클래스 - 구현 클래스 연결, 추상 계층 분리</td></tr>
-      <tr><td class="k">플라이웨이트 (Flyweight)</td><td>메모리 절약, 클래스 경량화, 가상화</td></tr>
-      <tr><td class="k">컴포지트 (Composite)</td><td>트리구조, 복합 객체와 단일 객체 동일하게 다룸</td></tr>
+      <tr><td class="k">어댑터 (Adapter) ❗</td><td><b>호환되지 않는(서로 다른) 인터페이스를 변환</b>해 함께 동작하게. <span class="note">기존 클래스 재사용, 변환기</span></td></tr>
+      <tr><td class="k">브리지 (Bridge) ❗</td><td><b>추상(기능)부와 구현부를 분리</b>해 각각 독립적으로 확장. <span class="note">처음부터 분리 설계</span></td></tr>
+      <tr><td class="k">컴포지트 (Composite)</td><td><b>부분-전체 계층(트리 구조)</b>, <b>단일 객체와 복합 객체를 동일하게</b> 취급</td></tr>
+      <tr><td class="k">데코레이터 (Decorator)</td><td><b>기존 코드 수정 없이</b> 객체를 <b>감싸서 기능(책임)을 동적으로 추가·확장</b></td></tr>
+      <tr><td class="k">퍼사드 (Facade)</td><td>복잡한 서브시스템에 대한 <b>단순화된 통합 창구(상위 인터페이스)</b> 제공 → 결합도↓</td></tr>
+      <tr><td class="k">플라이웨이트 (Flyweight)</td><td><b>다수의 유사 객체를 공유</b>해 <b>메모리 절약</b>, 경량화</td></tr>
+      <tr><td class="k">프록시 (Proxy)</td><td>실제 객체에 대한 <b>접근을 제어하는 대리(代理) 객체</b>. <span class="note">접근제어·지연로딩·보안</span></td></tr>
     </tbody>
   </table>
 
-  <h4 id="des1-behavior">행위 패턴 <span class="note">(암기: 전옵중방이상인 매커책템)</span></h4>
+  <h4 id="des1-behavior">행위 패턴 (Behavioral) — 객체 간 <b>상호작용·책임 분배</b> <span class="note">(암기: 전옵중방이상인 매커책템)</span></h4>
   <table>
-    <thead><tr><th style="width:230px">패턴</th><th>핵심 키워드</th></tr></thead>
+    <thead><tr><th style="width:180px">패턴</th><th>핵심 의도 <span class="note">(굵은 곳 = 시험 키워드)</span></th></tr></thead>
     <tbody>
-      <tr><td class="k">전략 (Strategy)</td><td>알고리즘군 정의(캡슐화), 동적으로 교체</td></tr>
-      <tr><td class="k">옵저버 (Observer) ❗</td><td>한 객체 바뀌면 의존하는 다른 객체에 연락(변화 상태 전달) 가고 자동 갱신, 발행/수신</td></tr>
-      <tr><td class="k">중재자 (Mediator)</td><td>객체간 통신 중앙 관리, 통신 빈도수 낮음</td></tr>
-      <tr><td class="k">방문자 (Visitor) ❗</td><td>메서드가 각 클래스 돌아다님, 새로운 기능(연산) 추가할 때 사용</td></tr>
-      <tr><td class="k">이터레이터 (Iterator) ❗</td><td>컬렉션 내 모든 요소 순차 탐색, Cursor</td></tr>
-      <tr><td class="k">상태 (State)</td><td>내부 상태 변경시 객체 행동 방식 함께 변경</td></tr>
-      <tr><td class="k">인터프리터 (Interpreter)</td><td>특정 언어 문법 정의, 문법으로 작성된 문장 해석</td></tr>
-      <tr><td class="k">메멘토 (Memento)</td><td>실행취소 기능, 객체 내부 상태 외부 노출 X</td></tr>
-      <tr><td class="k">커맨드 (Command)</td><td>실행취소 기능, 요청 그 자체를 객체로 캡슐화</td></tr>
-      <tr><td class="k">책임 연쇄 (Chain of responsibility)</td><td>요청 처리할 수 있는 객체들을 연결, 요청이 들어오면 순서대로 처리</td></tr>
-      <tr><td class="k">템플릿 메서드 (Template Method)</td><td>상위 클래스 - 추상 메서드(기능의 골격) / 하위 클래스 - 세부처리 구체화</td></tr>
+      <tr><td class="k">전략 (Strategy) ❗</td><td><b>알고리즘군을 각각 캡슐화</b>해 <b>상호 교환(런타임 교체) 가능</b>하게. <span class="note">외부에서 알고리즘 선택</span></td></tr>
+      <tr><td class="k">옵저버 (Observer) ❗</td><td>한 객체(주제)의 <b>상태가 변하면 의존하는 객체들에게 자동 통지·갱신</b>. <span class="note">= 발행/구독, 이벤트 리스너</span></td></tr>
+      <tr><td class="k">중재자 (Mediator)</td><td>객체 간 <b>상호작용을 중재자에 집중</b> → 객체끼리 직접 참조 안 함(결합도↓)</td></tr>
+      <tr><td class="k">방문자 (Visitor) ❗</td><td><b>객체 구조는 그대로 두고 처리(연산)만 분리</b> → 구조 변경 없이 <b>새 연산(기능) 추가</b></td></tr>
+      <tr><td class="k">이터레이터 (Iterator) ❗</td><td>집합(컬렉션) <b>내부 구조 노출 없이 요소를 순차 접근</b>. <span class="note">= 반복자, Cursor</span></td></tr>
+      <tr><td class="k">상태 (State)</td><td>객체의 <b>내부 상태에 따라 행위(행동)가 바뀜</b> → 상태를 클래스로 (상태 전이)</td></tr>
+      <tr><td class="k">인터프리터 (Interpreter)</td><td><b>언어의 문법을 클래스로 표현</b>해 그 문법으로 작성된 <b>문장을 해석</b></td></tr>
+      <tr><td class="k">메멘토 (Memento)</td><td>캡슐화 위반 없이 <b>객체의 내부 상태를 저장·복원</b> → <b>실행취소(Undo)</b></td></tr>
+      <tr><td class="k">커맨드 (Command)</td><td><b>요청(명령) 자체를 객체로 캡슐화</b> → 실행취소·재실행·큐잉·로그</td></tr>
+      <tr><td class="k">책임 연쇄 (Chain of Responsibility)</td><td>요청을 <b>처리할 수 있는 객체들을 사슬로 연결</b>, 못 하면 다음 객체로 넘김</td></tr>
+      <tr><td class="k">템플릿 메서드 (Template Method)</td><td><b>알고리즘 골격(뼈대)은 상위</b>에서 정의, <b>세부 단계는 하위(서브) 클래스</b>에서 재정의</td></tr>
     </tbody>
   </table>
-  <p class="desc">** 행위패턴은 상호작용을 패턴화한 것! ❗</p>
 
-  <details class="bg"><summary>🔍 배경설명 — 자주 나오는 패턴 실사용 예 & 구별</summary>
+  <h4 id="des1-scenario">🎯 시나리오 → 패턴 <span class="note">(문제 설명 보고 답 찾기 — 실전 핵심)</span></h4>
+  <table>
+    <thead><tr><th style="width:60%">문제에 이런 <b>상황·설명</b>이 나오면</th><th>정답 패턴</th></tr></thead>
+    <tbody>
+      <tr><td>객체를 <b>하나만</b> 생성하고 전역에서 참조 (DB 풀·설정)</td><td class="k">싱글톤</td></tr>
+      <tr><td>생성할 객체의 <b>결정을 서브클래스</b>에 위임</td><td class="k">팩토리 메서드</td></tr>
+      <tr><td>관련 객체들의 <b>묶음(제품군)</b>을 한꺼번에 생성</td><td class="k">추상 팩토리</td></tr>
+      <tr><td>복잡한 객체를 <b>단계별로 조립</b>, 절차/표현 분리</td><td class="k">빌더</td></tr>
+      <tr><td>기존 객체를 <b>복제(clone)</b>해서 생성</td><td class="k">프로토타입</td></tr>
+      <tr><td><b>호환 안 되는 인터페이스</b>를 맞춰 연결</td><td class="k">어댑터</td></tr>
+      <tr><td>기능·구현을 <b>분리해 독립 확장</b></td><td class="k">브리지</td></tr>
+      <tr><td><b>트리(부분-전체)</b>, 단일·복합 객체 동일 취급</td><td class="k">컴포지트</td></tr>
+      <tr><td><b>코드 수정 없이 기능을 동적으로 덧씌움</b></td><td class="k">데코레이터</td></tr>
+      <tr><td>복잡한 서브시스템에 <b>단순한 창구 하나</b> 제공</td><td class="k">퍼사드</td></tr>
+      <tr><td>실제 객체 <b>접근을 제어</b>하는 대리 객체</td><td class="k">프록시</td></tr>
+      <tr><td>유사 객체 <b>공유로 메모리 절약</b></td><td class="k">플라이웨이트</td></tr>
+      <tr><td>상태 변화가 <b>자동으로 통지·갱신</b> (발행/구독)</td><td class="k">옵저버</td></tr>
+      <tr><td><b>알고리즘을 런타임에 교체</b></td><td class="k">전략</td></tr>
+      <tr><td><b>요청을 객체로 캡슐화</b>, 실행취소</td><td class="k">커맨드</td></tr>
+      <tr><td>내부 상태 <b>저장·복원(Undo)</b></td><td class="k">메멘토</td></tr>
+      <tr><td>알고리즘 <b>골격은 상위, 세부는 하위</b></td><td class="k">템플릿 메서드</td></tr>
+      <tr><td>요청 처리 객체를 <b>사슬로 연결</b></td><td class="k">책임 연쇄</td></tr>
+      <tr><td><b>내부 상태에 따라 행위가 바뀜</b></td><td class="k">상태(State)</td></tr>
+      <tr><td>구조 변경 없이 <b>새 연산(기능) 추가</b></td><td class="k">방문자(Visitor)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cmp"><div class="h">⚠️ 헷갈리는 패턴 구별 (실기 함정 단골)</div>
+    <ul>
+      <li><b>팩토리 메서드 ↔ 추상 팩토리</b> : 객체 <b>하나</b> 생성 위임 ↔ 관련 객체 <b>묶음(제품군)</b> 생성</li>
+      <li><b>어댑터 ↔ 브리지</b> : <b>이미 있는</b> 것을 끼워맞춤(변환) ↔ <b>처음부터</b> 추상/구현 분리 설계</li>
+      <li><b>퍼사드 ↔ 어댑터</b> : 복잡한 여러 개를 <b>하나의 단순 창구</b>로 ↔ <b>하나의 인터페이스를 다른 것으로 변환</b></li>
+      <li><b>데코레이터 ↔ 프록시</b> : 인터페이스 유지하며 <b>기능 추가</b> ↔ 인터페이스 유지하며 <b>접근 제어</b>(기능 추가 아님)</li>
+      <li><b>전략 ↔ 상태</b> : 외부가 알고리즘 <b>선택·교체</b> ↔ <b>내부 상태</b>에 따라 행위 자동 변화</li>
+      <li><b>전략 ↔ 템플릿 메서드</b> : <b>합성(위임)</b>으로 알고리즘 교체 ↔ <b>상속</b>으로 골격 고정+일부 재정의</li>
+      <li><b>옵저버 ↔ 중재자</b> : 주제→구독자 <b>일대다 자동 통지</b> ↔ 여러 객체 <b>상호작용을 중앙에서 중재</b></li>
+    </ul>
+  </div>
+
+  <details class="bg"><summary>📝 기출 유형 예제 — 설명 보고 패턴 맞히기 (정답 포함)</summary>
     <div class="body">
       <ul>
-        <li><b>싱글톤</b> : 인스턴스 1개만 (예: DB 커넥션 풀, 설정 관리자).</li>
-        <li><b>팩토리 메서드</b> : 객체 생성을 서브클래스에 위임 ↔ <b>추상 팩토리</b> : 관련 객체들의 <b>묶음(제품군)</b>을 생성.</li>
-        <li><b>어댑터</b> : 호환 안 되는 인터페이스 연결(변환기) ↔ <b>브리지</b> : 기능·구현을 분리해 독립 확장.</li>
-        <li><b>프록시</b> : 대리 객체가 접근 제어/지연 로딩 ↔ <b>데코레이터</b> : 기능을 동적으로 덧씌움.</li>
-        <li><b>옵저버</b> : 상태 변화를 구독자에게 자동 통지(발행/구독, 예: 이벤트 리스너).</li>
-        <li><b>전략</b> : 알고리즘을 캡슐화해 런타임 교체 ↔ <b>템플릿 메서드</b> : 골격은 상위, 세부는 하위에서 구현.</li>
-        <li class="why">분류 = 생성(객체 생성 방식) / 구조(클래스·객체 조합) / 행위(객체 간 상호작용·책임 분배).</li>
+        <li>Q1. "인스턴스가 <b>오직 하나만</b> 생성되고, 어디서든 그 인스턴스에 접근할 수 있게 하는 패턴은?" → <b>싱글톤(Singleton)</b></li>
+        <li>Q2. "객체의 <b>상태 변화가 있을 때</b> 관련된 다른 객체들에게 <b>자동으로 통지·갱신</b>되는(발행-구독) 패턴은?" → <b>옵저버(Observer)</b></li>
+        <li>Q3. "<b>알고리즘군을 정의하고 캡슐화</b>하여 상호 교환이 가능하게 만드는 패턴은?" → <b>전략(Strategy)</b></li>
+        <li>Q4. "생성 패턴에 해당하지 <b>않는</b> 것은? (빌더 / 프로토타입 / <u>어댑터</u> / 싱글톤)" → <b>어댑터</b> <span class="note">(구조 패턴)</span></li>
+        <li>Q5. "GoF 디자인 패턴은 목적에 따라 ( ), ( ), ( ) 3가지로 분류된다." → <b>생성, 구조, 행위</b></li>
+        <li>Q6. "요청 자체를 <b>객체로 캡슐화</b>하여 실행취소·재실행을 지원하는 패턴은?" → <b>커맨드(Command)</b></li>
+        <li>Q7. "알고리즘의 <b>골격은 상위 클래스</b>에서 정의하고 <b>세부 구현은 하위 클래스</b>에서 하는 패턴은?" → <b>템플릿 메서드(Template Method)</b></li>
+        <li class="why">답 쓰기형은 <b>한글·영문 병기</b>하면 안전 (예: "싱글톤(Singleton)"). 분류 물으면 <b>생성·구조·행위</b> 정확히.</li>
       </ul>
     </div>
   </details>
