@@ -24,11 +24,11 @@ SELECT 문의 절은 쓰는 순서가 정해져 있다. `SELECT → FROM → WHE
 | 조인 | `SELECT 이름, 부서명 FROM 사원 JOIN 부서 ON 사원.부서번호 = 부서.부서번호;` | 명시적 조인 조건 → **ON** |
 | 모두 비교 | `SELECT 이름 FROM 사원 WHERE 급여 > ALL (SELECT 급여 FROM 사원 WHERE 부서번호 = 20);` | "모든 ~보다 크다" → **ALL** |
 | 중복 제거 | `SELECT DISTINCT 학과 FROM 학생;` | |
-| NULL 검사 | `SELECT 이름 FROM 학생 WHERE 점수 IS NULL;` | `= NULL`은 항상 거짓 |
+| NULL 검사 | `SELECT 이름 FROM 학생 WHERE 점수 IS NULL;` | `= NULL`은 결과가 UNKNOWN이라 어떤 행도 고르지 못한다 |
 
 `LIKE`의 `%`는 0글자 이상, `_`는 정확히 한 글자다. `'%철%'`은 "철이 포함된", `'_철'`은 "철 앞에 딱 한 글자"다.
 
-서브쿼리 비교 연산자: `> ALL`은 서브쿼리 결과의 **최댓값보다** 커야 참이고, `> ANY`는 **최솟값보다** 크기만 하면 참이다(`< ALL`은 최솟값보다 작아야, `< ANY`는 최댓값보다 작으면 참). **ANY와 SOME은 같은 뜻**이다. `IN`은 `= ANY`와, `NOT IN`은 `<> ALL`과 같다. `EXISTS`는 값을 비교하지 않고 서브쿼리가 행을 하나라도 돌려주는지만 본다. `ALL`과 `ANY`는 sqlite가 지원하지 않아 아래 예제에서는 같은 뜻의 `MAX`/`MIN`으로 바꿔 실행했다.
+서브쿼리 비교 연산자: `> ALL`은 서브쿼리 결과의 **최댓값보다** 커야 참이고, `> ANY`는 **최솟값보다** 크기만 하면 참이다(`< ALL`은 최솟값보다 작아야, `< ANY`는 최댓값보다 작으면 참). **ANY와 SOME은 같은 뜻**이다. `IN`은 `= ANY`와, `NOT IN`은 `<> ALL`과 같다. `EXISTS`는 값을 비교하지 않고 서브쿼리가 행을 하나라도 돌려주는지만 본다. `ALL`과 `ANY`는 sqlite가 지원하지 않아 아래 예제에서는 `MAX`/`MIN` 비교로 바꿔 실행했다(서브쿼리 결과가 비어 있지 않고 NULL이 없으면 결과가 같다. PostgreSQL에서 `> ALL`/`> ANY` 원문으로 실행해도 같은 결과).
 
 ```sql
 CREATE TABLE 사원(사번 INT, 이름 TEXT, 부서번호 INT, 급여 INT);
@@ -46,7 +46,7 @@ SELECT 이름, 급여 FROM 사원 WHERE 급여 >= 2500 ORDER BY 급여 DESC;
 출력: `강감찬 4000`, `홍길동 3000`, `김유신 2500`
 
 ```sql
--- 급여 > ALL (SELECT 급여 FROM 사원 WHERE 부서번호 = 20) 과 같은 뜻
+-- 급여 > ALL (SELECT 급여 FROM 사원 WHERE 부서번호 = 20) 과 결과가 같다 (서브쿼리가 비어 있지 않고 NULL이 없을 때)
 SELECT 이름, 급여 FROM 사원 WHERE 급여 > (SELECT MAX(급여) FROM 사원 WHERE 부서번호 = 20);
 ```
 출력: `홍길동 3000`, `강감찬 4000` (ANY였다면 MIN과 비교하므로 유관순·김유신도 포함되어 4명)
@@ -82,6 +82,7 @@ SELECT COUNT(*) FROM 사원 WHERE 부서번호 IS NULL;
 |---|---|
 | `COUNT(*)` | 전체 행 수. 중복이든 NULL이든 다 센다 |
 | `COUNT(DISTINCT 컬럼)` | 그 컬럼의 서로 다른 값 개수. NULL은 빼고 센다 |
+| `GROUP BY 컬럼` | 그 컬럼이 NULL인 행은 버려지지 않고 **NULL끼리 한 그룹**이 된다(집계 함수의 NULL 무시와 다르다) |
 | `SELECT DISTINCT A, B` | (A, B) **조합**이 같은 행만 하나로. A 하나만 같은 것은 중복이 아니다 |
 | `UNION` | 두 결과를 합치고 **중복 행 제거**. `ORDER BY`는 맨 뒤에 한 번만, 전체 결과에 적용 |
 | `UNION ALL` | 중복을 남긴다 |
@@ -163,12 +164,12 @@ DELETE FROM 부서4 WHERE 부서번호 = 20;   -- 사원5가 참조 중
 ### 기출에서 이렇게 나왔다
 
 - 26-1, 22-3, 20-1: DISTINCT가 있는 문과 없는 문 3개의 결과 행 수 → **200 / 3 / 1** (22-3은 **90 / 3 / 1**). 같은 유형이 세 번 나왔다
-- 23-3: UNION 뒤 ORDER BY DESC 결과 표 → **8, 5, 4, 2, 1**
+- 23-3: UNION 뒤 ORDER BY DESC 결과 표 6칸 → 첫 칸은 헤더 **C1**, 이어서 **8, 5, 4, 2, 1**
 - 22-3: ON DELETE CASCADE가 걸린 테이블에서 부모 삭제 뒤 COUNT와 COUNT DISTINCT → **3 / 4**
 
 ### 답 쓸 때
 
-UNION 결과를 쓸 때 중복을 먼저 지우고 정렬한다. CASCADE 문제는 "부모에서 지운 값을 외래키로 가진 자식 행"을 표에서 지운 뒤 센다.
+UNION 결과를 쓸 때 중복을 먼저 지우고 정렬한다. 결과 표 빈칸 수가 값 개수보다 하나 많으면 첫 칸은 열 이름(첫 SELECT의 열 이름)이다. CASCADE 문제는 "부모에서 지운 값을 외래키로 가진 자식 행"을 표에서 지운 뒤 센다.
 
 ## 키워드 빈칸: INSERT·UPDATE·DELETE
 출제: 24-2, 23-2, 23-1, 21-2, 20-3
@@ -248,13 +249,13 @@ INSERT INTO 교수 VALUES (2,'이교수','lee@x.kr',50,'D2');
 | 문장 | 완성 문장 |
 |---|---|
 | 컬럼 추가 | `ALTER TABLE 교수 ADD 전화 TEXT;` |
-| 컬럼 변경·삭제 | `ALTER TABLE 교수 ALTER 나이 SET DEFAULT 30;` (표준 SQL. Oracle·MySQL은 `ALTER TABLE 교수 MODIFY 나이 INT;`) / `ALTER TABLE 교수 DROP COLUMN 전화;` (DROP COLUMN은 sqlite에서 실행 확인. 컬럼을 바꾸는 ALTER·MODIFY는 sqlite에 없어 실행 확인 안 함) |
+| 컬럼 변경·삭제 | `ALTER TABLE 교수 ALTER 나이 SET DEFAULT 30;` (표준 SQL, 기본값 변경) / 자료형 변경은 Oracle·MySQL `ALTER TABLE 교수 MODIFY 나이 INT;`, 표준 SQL `ALTER TABLE 교수 ALTER 나이 SET DATA TYPE INT;` / `ALTER TABLE 교수 DROP COLUMN 전화;` (DROP COLUMN은 sqlite에서, ALTER는 PostgreSQL에서 실행 확인. MODIFY는 실행 확인 안 함) |
 | 인덱스 | `CREATE INDEX idx_교수_이름 ON 교수(이름);` |
 | 뷰 | `CREATE VIEW 고령교수 AS SELECT 이름, 나이 FROM 교수 WHERE 나이 >= 45;` |
-| 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남', '여'));` (표준 문법, sqlite 미지원) |
+| 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남', '여'));` (표준 문법, sqlite 미지원. PostgreSQL에서 실행 확인) |
 | 삭제 | `DROP TABLE 교수 CASCADE;` / `DROP VIEW 고령교수;` / `DROP INDEX idx_교수_이름;` |
 
-**DROP ... CASCADE**는 그 객체를 참조하는 다른 객체(뷰·외래키)까지 함께 삭제하고, **RESTRICT**는 참조하는 객체가 있으면 삭제를 막는다. (sqlite는 CASCADE 옵션을 받지 않아 아래에서는 옵션 없이 실행했다.)
+**DROP ... CASCADE**는 그 객체를 참조하는 다른 객체(뷰·외래키)까지 함께 삭제하고, **RESTRICT**는 참조하는 객체가 있으면 삭제를 막는다. (sqlite는 CASCADE 옵션을 받지 않아 아래에서는 옵션 없이 실행했다. `DROP TABLE ... CASCADE`의 동작은 PostgreSQL에서 실행 확인.)
 
 제약조건 위반 시 어떤 오류가 나는지 확인한 것 (위 교수 테이블에 1·2번 교수가 있고, 학과는 D1·D2만 존재):
 
@@ -265,7 +266,7 @@ INSERT INTO 교수(교수번호, 이름, 학과코드) VALUES (6,'한교수','D9
 INSERT INTO 교수(교수번호, 이름) VALUES (1,'중복');                     -- PRIMARY KEY 위반
 INSERT INTO 교수(교수번호) VALUES (7);                                  -- NOT NULL 위반
 ```
-출력: 다섯 문장 모두 오류로 거부된다 (`CHECK constraint failed`, `UNIQUE constraint failed: 교수.이메일`, `FOREIGN KEY constraint failed`, `UNIQUE constraint failed: 교수.교수번호`, `NOT NULL constraint failed: 교수.이름`)
+출력: 다섯 문장 모두 오류로 거부된다 (`CHECK constraint failed`, `UNIQUE constraint failed: 교수.이메일`, `FOREIGN KEY constraint failed`, `UNIQUE constraint failed: 교수.교수번호`, `NOT NULL constraint failed: 교수.이름`) (참고: sqlite는 호환성 때문에 `INT PRIMARY KEY` 컬럼에 NULL을 넣어도 거부하지 않는다. 표준 SQL과 다른 DBMS에서는 기본키 NULL이 개체 무결성 위반으로 거부된다.)
 
 ```sql
 DELETE FROM 학과 WHERE 학과코드 = 'D2';     -- 이교수가 참조 중, ON DELETE SET NULL
@@ -303,7 +304,8 @@ DROP INDEX idx_교수_이름;
 | `COUNT(컬럼)` | 그 컬럼이 **NULL인 행은 빼고** 센다 |
 | `SUM·AVG·MAX·MIN` | NULL을 무시한다. AVG는 NULL이 아닌 값만으로 평균 |
 | `AND`와 `OR` | **AND가 먼저** 묶인다. `A OR B AND C`는 `A OR (B AND C)` |
-| `NULL` 비교 | `= NULL`, `<> NULL`은 모두 거짓. `IS NULL`만 참이 된다. `<>` 조건도 NULL 행은 빠진다 |
+| `NULL` 비교 | `= NULL`, `<> NULL`의 결과는 거짓이 아니라 UNKNOWN이라 WHERE를 통과하는 행이 없다(`NOT (컬럼 = NULL)`도 0행). NULL 검사는 `IS NULL`·`IS NOT NULL`로만 한다. `<>` 조건 하나만 있으면 NULL 행은 빠진다(OR로 다른 참 조건이 붙으면 통과한다) |
+| NULL이 낀 OR·AND | NULL과의 비교(`=`, `IN`, `>` 등)는 UNKNOWN이지만 그 행을 바로 버리지 않는다. **UNKNOWN OR 참 = 참**, UNKNOWN OR 거짓 = UNKNOWN, UNKNOWN AND 참 = UNKNOWN, UNKNOWN AND 거짓 = 거짓이다. WHERE는 최종 결과가 참인 행만 남긴다 |
 
 ```sql
 CREATE TABLE 학생(학번 INT, 이름 TEXT, 학과 TEXT, 점수 INT);
@@ -341,6 +343,7 @@ SELECT COUNT(*) FROM 사원 WHERE 부서번호 <> 10;
 ### 기출에서 이렇게 나왔다
 
 - 25-3, 22-2: IN과 OR이 섞인 WHERE 뒤 `COUNT(컬럼)`, 그 컬럼에 NULL 포함 → **4** (25-3), **3** (22-2). 같은 유형
+- 25-3 풀이: (2,NULL)·(3,6)·(2,3)은 `C1 IN(2,3)`이 참, (4,5)는 `C2 IN(3,5)`가 참이다. (NULL,5)는 `C1 IN(2,3)`이 UNKNOWN이지만 `C2 IN(3,5)`가 참이라 통과한다. 통과한 5행에서 C2가 NULL인 (2,NULL)을 `COUNT(C2)`가 빼서 **4**다. (NULL,5)까지 빼면 3이라는 오답이 나온다.
 - 24-1, 21-1: 괄호 없는 `OR ... AND` 조건의 COUNT → **1** (같은 유형)
 
 ### 답 쓸 때
@@ -416,7 +419,18 @@ SELECT COUNT(*) FROM 학생 CROSS JOIN 과목 WHERE 이름 LIKE '%수' AND 과�
 
 ### 답 쓸 때
 
-CROSS JOIN은 조합을 전부 나열하지 말고 "조건에 맞는 왼쪽 행 수 × 조건에 맞는 오른쪽 행 수"로 센다. 결과 표를 요구하면 헤더 이름을 SELECT 절에 적힌 그대로 쓴다.
+CROSS JOIN 뒤 WHERE 조건이 **한쪽 테이블에만** 걸리면(`과목명 LIKE '데이터%'`) "조건에 맞는 왼쪽 행 수 × 조건에 맞는 오른쪽 행 수"로 센다. 조건이 **두 테이블을 함께** 쓰면(`GAMJA.NAME LIKE A.RULE`처럼 패턴이 다른 테이블의 컬럼) 곱하면 안 된다. 오른쪽 행(패턴)마다 맞는 왼쪽 행 수를 세어 더한다. 21-3: `S%` → SIGAMJA·SEAGAMJA 2개, `%A%` → 세 이름 모두 3개, 합 **5** (곱셈으로 하면 3 × 2 = 6이 되어 틀린다).
+
+```sql
+CREATE TABLE GAMJA(NAME TEXT); INSERT INTO GAMJA VALUES ('SIGAMJA'),('WANGGAMJA'),('SEAGAMJA');
+CREATE TABLE A(RULE TEXT); INSERT INTO A VALUES ('S%'),('%A%');
+SELECT COUNT(*) CNT FROM GAMJA CROSS JOIN A WHERE GAMJA.NAME LIKE A.RULE;
+```
+출력:
+```
+5
+```
+ 결과 표를 요구하면 헤더 이름을 SELECT 절에 적힌 그대로 쓴다.
 
 ## 결과 예측: 서브쿼리
 출제: 26-2, 26-1, 24-3, 24-1
@@ -430,6 +444,8 @@ CROSS JOIN은 조합을 전부 나열하지 말고 "조건에 맞는 왼쪽 행 
 | 다중 행 서브쿼리 `WHERE 학번 IN (SELECT ...)` | 안쪽을 **목록**으로 바꾼 뒤 바깥을 읽는다. ANY·ALL·EXISTS도 이 부류 |
 | 상관 서브쿼리 `WHERE 급여 > (SELECT AVG(급여) FROM 사원 WHERE 부서번호 = S.부서번호)` | 안쪽이 바깥 행을 참조하므로 **바깥 행마다** 안쪽을 다시 계산한다 |
 | 중첩 (서브쿼리 안에 GROUP BY·HAVING) | 가장 안쪽부터 결과 집합을 적어 두고 한 단계씩 바깥으로 |
+
+서브쿼리 안에서 집계할 행이 하나도 없으면 COUNT는 0이지만 SUM·AVG·MAX·MIN은 NULL이다. 바깥의 `x > NULL`은 UNKNOWN이라 그 행은 빠진다.
 
 ```sql
 CREATE TABLE 부서(부서번호 INT, 부서명 TEXT);
@@ -470,9 +486,15 @@ WHERE EXISTS (SELECT * FROM 수강 WHERE 수강.학번 = 학생.학번 AND 과�
 ```
 출력: `김철수`, `이영희`, `박민수`
 
+```sql
+SELECT COUNT(*) FROM 부서 WHERE 부서번호 NOT IN (SELECT 부서번호 FROM 사원);
+SELECT COUNT(*) FROM 부서 D WHERE NOT EXISTS (SELECT 1 FROM 사원 S WHERE S.부서번호 = D.부서번호);
+```
+출력: `0`, `2` (사원 부서번호에 NULL(유관순)이 섞여 있으면 `NOT IN`은 `<> NULL` 비교가 UNKNOWN이 되어 어떤 행도 남지 않는다. NOT EXISTS는 NULL과 상관없이 사원 없는 부서 2개를 센다)
+
 ### 기출에서 이렇게 나왔다
 
-- 26-2: 상관 서브쿼리(AVG)와 IN이 섞인 COUNT → **3**
+- 26-2: 상관 서브쿼리(AVG)와 IN이 섞인 COUNT → **3**. A 행마다 안쪽을 다시 계산한다. x=10이면 `A2.x < 10`인 행이 없어 IN 목록이 비고, 빈 집합의 AVG는 NULL이라 `10 > NULL`이 UNKNOWN으로 빠진다. x=20은 id {1} → AVG(5, 15) = 10, x=30은 id {1, 2} → AVG(5, 15, 20) = 13.33, x=40은 id {1, 2, 3} → AVG(5, 15, 20, 35) = 18.75로 셋 다 참이다. AVG를 0으로 놓으면 4라는 오답이 나온다
 - 26-1: JOIN 뒤 AVG 서브쿼리 조건 COUNT → **2**
 - 24-3: JOIN + GROUP BY·HAVING이 든 중첩 서브쿼리 COUNT → **1**
 - 24-1: IN 서브쿼리 결과 값 → **a, b**
@@ -487,7 +509,7 @@ WHERE EXISTS (SELECT * FROM 수강 WHERE 수강.학번 = 학생.학번 AND 과�
 
 ### 개념
 
-DCL은 권한을 다루는 명령이다. sqlite는 사용자 개념이 없어 GRANT·REVOKE를 지원하지 않으므로 아래는 표준 문법만 적는다(실행 확인 안 함).
+DCL(데이터 제어어)은 데이터 보안·무결성 유지·병행 제어·회복을 위한 명령이다. 국내 시험은 권한을 다루는 GRANT·REVOKE와 트랜잭션을 끝내는 COMMIT·ROLLBACK을 모두 DCL로 분류한다(COMMIT·ROLLBACK을 TCL로 따로 떼기도 한다). 2025년 3회 필기에서 "DCL 명령어가 아닌 것"(보기 COMMIT·ROLLBACK·GRANT·SELECT)의 정답은 SELECT였다. sqlite는 사용자 개념이 없어 GRANT·REVOKE를 지원하지 않으므로 아래는 표준 문법만 적는다(아래 다섯 문장은 PostgreSQL에서 실행 확인).
 
 | 문장 | 완성 문장 | 뜻 |
 |---|---|---|
@@ -497,7 +519,7 @@ DCL은 권한을 다루는 명령이다. sqlite는 사용자 개념이 없어 GR
 | 연쇄 회수 | `REVOKE UPDATE ON 학생 FROM USER1 CASCADE;` | USER1이 남에게 준 권한까지 함께 회수 |
 | 재부여 권한만 회수 | `REVOKE GRANT OPTION FOR UPDATE ON 학생 FROM USER1;` | |
 
-GRANT는 `TO`, REVOKE는 `FROM`이 짝이다. 권한 종류는 SELECT·INSERT·UPDATE·DELETE·ALL이다.
+GRANT는 `TO`, REVOKE는 `FROM`이 짝이다. 대표 권한은 SELECT·INSERT·UPDATE·DELETE·ALL이고 ALTER·INDEX·REFERENCES나 DDL 권한(CREATE 등)도 줄 수 있다. 모든 사용자에게 줄 때는 `TO PUBLIC`이라 쓰고, 여러 권한을 묶어 사용자 그룹에 주는 단위를 **롤(ROLE)**이라 한다.
 
 ### 기출에서 이렇게 나왔다
 
@@ -515,9 +537,9 @@ GRANT는 `TO`, REVOKE는 `FROM`이 짝이다. 권한 종류는 SELECT·INSERT·U
 | 분류 | 명령 | 특징 |
 |---|---|---|
 | **DDL(Data Definition Language)** | CREATE·ALTER·DROP·TRUNCATE | 스키마 정의. 자동 COMMIT |
-| **DML(Data Manipulation Language)** | SELECT·INSERT·UPDATE·DELETE | 데이터 조작. 트랜잭션 단위로 되돌릴 수 있다 |
-| **DCL(Data Control Language)** | GRANT·REVOKE | 권한 |
-| **TCL(Transaction Control Language)** | COMMIT·ROLLBACK·SAVEPOINT | 트랜잭션 제어. DCL에 포함시키기도 한다 |
+| **DML(Data Manipulation Language)** | SELECT·INSERT·UPDATE·DELETE | 데이터 조작. 트랜잭션 단위로 되돌릴 수 있다. NCS 학습모듈은 SELECT를 **DQL(Data Query Language, 데이터 질의어)**로 따로 부르기도 한다 |
+| **DCL(Data Control Language)** | GRANT·REVOKE (국내 시험은 COMMIT·ROLLBACK도 포함) | 권한, 그리고 무결성·병행 제어·회복 |
+| **TCL(Transaction Control Language)** | COMMIT·ROLLBACK·SAVEPOINT | 트랜잭션 제어. **국내 시험(NCS·필기)은 COMMIT·ROLLBACK을 DCL로 분류한다.** "DCL 명령어"를 물으면 GRANT·REVOKE·COMMIT·ROLLBACK |
 
 SELECT 문은 `SELECT [DISTINCT] 컬럼 FROM 테이블 [WHERE 조건] [GROUP BY 컬럼] [HAVING 그룹조건] [ORDER BY 컬럼 ASC|DESC]` 순서로 쓴다. 처리는 FROM(테이블 확보) → WHERE(행 선택) → GROUP BY(묶기) → HAVING(그룹 선택) → SELECT(열 선택·집계 계산) → ORDER BY(정렬) 순이다. 이 순서 때문에 WHERE에서는 그룹 함수를 쓸 수 없다. HAVING은 보통 GROUP BY와 함께 쓰지만, GROUP BY 없이 쓰면 테이블 전체를 한 그룹으로 본다.
 
@@ -559,7 +581,7 @@ INSERT INTO 사원 VALUES (101,'홍길동',10,3000),(102,'이순신',20,1000),
 SELECT 이름, 부서명 FROM 사원 NATURAL JOIN 부서;
 SELECT * FROM 사원 NATURAL JOIN 부서 LIMIT 1;
 ```
-출력: `홍길동 개발`, `이순신 영업`, `강감찬 개발`, `김유신 영업` / 전체 컬럼은 `사번 이름 부서번호 급여 부서명` 5개(부서번호가 한 번만)
+출력: `홍길동 개발`, `이순신 영업`, `강감찬 개발`, `김유신 영업` / 전체 컬럼은 5개이고 부서번호는 한 번만 나온다. 표준 SQL(Oracle·PostgreSQL)은 공통 컬럼을 맨 앞에 두어 `부서번호 사번 이름 급여 부서명` 순서다(sqlite만 `사번 이름 부서번호 급여 부서명` 순서로 보여 준다).
 
 ```sql
 CREATE TABLE A(값 INT);  CREATE TABLE B(값 INT);
@@ -576,7 +598,7 @@ SELECT 값 FROM A EXCEPT SELECT 값 FROM B;
 
 ### 개념
 
-**뷰(View)**는 하나 이상의 기본 테이블에서 유도한 SELECT 문을 이름 붙여 저장한 가상 테이블이다. 물리적으로 데이터를 갖지 않고 조회할 때마다 원본에서 계산하므로 원본이 바뀌면 뷰 결과도 바로 바뀐다. 원본 테이블을 DROP하면 뷰도 쓸 수 없다.
+**뷰(View)**는 하나 이상의 기본 테이블에서 유도한 SELECT 문을 이름 붙여 저장한 가상 테이블이다. 물리적으로 데이터를 갖지 않고 조회할 때마다 원본에서 계산하므로 원본이 바뀌면 뷰 결과도 바로 바뀐다. 원본 테이블을 DROP하면 뷰도 쓸 수 없다. 뷰를 바탕으로 또 다른 뷰를 정의할 수 있고, 기초가 된 테이블이나 뷰를 지우면 그 위에 정의된 뷰도 쓸 수 없다.
 
 | 장점 | 단점 |
 |---|---|
@@ -584,7 +606,7 @@ SELECT 값 FROM A EXCEPT SELECT 값 FROM B;
 | **보안**: 필요한 열·행만 사용자에게 보인다 | **ALTER로 정의를 바꿀 수 없다**. DROP 뒤 다시 CREATE한다 |
 | **편의**: 복잡한 조인·조건을 이름 하나로 조회한다 | **삽입·갱신·삭제 제약**: 조인·집계 함수·DISTINCT·GROUP BY가 든 뷰는 갱신할 수 없다 |
 
-**WITH CHECK OPTION**은 뷰를 정의한 WHERE 조건을 벗어나는 INSERT·UPDATE를 거부한다. 예를 들어 `CREATE VIEW 개발부 AS SELECT * FROM 사원 WHERE 부서번호 = 10 WITH CHECK OPTION;`이면 이 뷰로 부서번호 20인 행을 넣거나 부서번호를 20으로 바꿀 수 없다. (sqlite는 이 옵션을 지원하지 않아 실행 확인 안 함)
+**WITH CHECK OPTION**은 뷰를 정의한 WHERE 조건을 벗어나는 INSERT·UPDATE를 거부한다. 예를 들어 `CREATE VIEW 개발부 AS SELECT * FROM 사원 WHERE 부서번호 = 10 WITH CHECK OPTION;`이면 이 뷰로 부서번호 20인 행을 넣거나 부서번호를 20으로 바꿀 수 없다. (sqlite는 이 옵션을 지원하지 않아 PostgreSQL에서 실행 확인)
 
 **인덱스(Index)**는 검색 속도를 위해 <키 값, 주소> 쌍을 따로 정렬해 둔 구조다. 조회는 빨라지지만 INSERT·UPDATE·DELETE마다 인덱스도 갱신해야 해서 쓰기 비용이 늘고 공간을 차지한다. PRIMARY KEY와 UNIQUE에는 자동으로 만들어진다.
 
@@ -644,6 +666,8 @@ SELECT COALESCE(NULL, NULL, 3), NULLIF(5, 5), NULLIF(5, 3);
 | **DENSE_RANK()** | 공동 순위를 주되 건너뛰지 않는다 | 1, 2, 2, 3 |
 | **ROW_NUMBER()** | 같아도 무조건 다른 번호 | 1, 2, 3, 4 |
 
+윈도우 함수는 **OLAP 함수**라고도 한다. 종류는 집계(SUM·AVG… OVER), **순위**(RANK·DENSE_RANK·ROW_NUMBER), **행 순서**(FIRST_VALUE·LAST_VALUE, 이전 행 값 **LAG**·다음 행 값 **LEAD**), **그룹 내 비율**(RATIO_TO_REPORT·PERCENT_RANK·CUME_DIST·NTILE)이다. PARTITION BY는 생략할 수 있고, 생략하면 전체가 하나의 윈도우다.
+
 ```sql
 CREATE TABLE 성적(이름 TEXT, 반 TEXT, 점수 INT);
 INSERT INTO 성적 VALUES ('가','A',90),('나','A',80),('다','A',80),('라','A',70),('마','B',85),('바','B',60);
@@ -661,6 +685,8 @@ SELECT 이름, 반, 점수, SUM(점수) OVER (PARTITION BY 반) AS 반합계 FRO
 ```
 출력: `가 A 90 320`, `나 A 80 320`, `다 A 80 320`, `라 A 70 320`, `마 B 85 145`, `바 B 60 145` (6행이 그대로 남고 반별 합계가 옆에 붙는다. `GROUP BY 반`이었다면 `A 320`, `B 145` 두 행)
 
+**그룹 함수**는 GROUP BY 뒤에 써서 소계·총계 행을 함께 만든다. **ROLLUP(A, B)**는 (A, B)별·A별 소계와 총계를 만든다. 컬럼이 n개면 n+1단계이고, 컬럼 순서가 바뀌면 결과도 바뀐다. **CUBE(A, B)**는 가능한 모든 조합((A, B)·A·B·전체)의 소계를 만든다. **GROUPING SETS((A), (B))**는 지정한 묶음별 집계만 만들며 컬럼 순서와 상관없다. 예: 위 성적 표에서 `SELECT 반, SUM(점수) FROM 성적 GROUP BY ROLLUP(반) ORDER BY 반;` → `A 320`, `B 145`, `NULL 465`(마지막 행이 총계. sqlite는 ROLLUP을 지원하지 않아 PostgreSQL에서 실행 확인).
+
 ## 프로시저·트리거·사용자 정의 함수·커서
 출제: 없음
 
@@ -674,6 +700,8 @@ SELECT 이름, 반, 점수, SUM(점수) OVER (PARTITION BY 반) AS 반합계 FRO
 | **커서(Cursor)** | 여러 행으로 된 SELECT 결과를 한 행씩 가리키며 처리하는 포인터 | 명시적 커서는 **DECLARE → OPEN → FETCH → CLOSE** |
 
 커서는 DBMS가 일반 SQL을 실행할 때 알아서 만드는 **묵시적 커서(Implicit)**와 개발자가 직접 선언·제어하는 **명시적 커서(Explicit)**로 나뉜다. 프로시저·UDF·커서는 sqlite에 없어 실행하지 않았다. 트리거는 sqlite로 확인했다.
+
+프로시저 매개변수 모드는 **IN**(입력)·**OUT**(출력)·**INOUT**(입출력) 세 가지다. 트리거는 매개변수(IN·OUT)와 반환값이 없고, 이벤트(INSERT·UPDATE·DELETE), 시점(**BEFORE·AFTER**), 행마다 실행할지(**FOR EACH ROW**)로 정의한다. 트리거 안에서는 **COMMIT·ROLLBACK을 쓸 수 없다**. 변경 전후 값은 Oracle에서 `:OLD`·`:NEW`, SQL Server에서 `deleted`·`inserted`로 참조한다(INSERT면 OLD가, DELETE면 NEW가 NULL).
 
 ```sql
 CREATE TABLE 사원(사번 INT, 급여 INT);
