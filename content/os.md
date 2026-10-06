@@ -162,8 +162,9 @@ Unix 파일 권한은 **소유자(u, user)**, **그룹(g, group)**, **기타(o, 
 
 ```mermaid
 제목: 대기에서 실행으로 바로 가는 화살표는 없다. 사건이 끝나면 준비로 돌아간다
+%% 폰: TB
 stateDiagram-v2
-  direction TB
+  direction LR
   state "생성" as New
   state "준비" as Ready
   state "실행" as Run

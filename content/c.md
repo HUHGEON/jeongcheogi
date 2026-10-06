@@ -169,8 +169,8 @@ int main() {
 ```mermaid
 제목: 노드는 값과 다음 노드의 주소(next)를 가진다. 마지막 노드의 next는 NULL
 flowchart LR
-  H(["head"]) --> A["10 | next"]
-  A --> B["20 | next"]
+  H(["head"]) --> A("10 | next")
+  A --> B("20 | next")
   B --> N(["NULL"])
 ```
 

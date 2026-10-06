@@ -40,13 +40,13 @@
 ```mermaid
 제목: 25-2 기출 흐름도. TC1 ①②③④⑤⑥⑦, TC2 ①②④⑤⑥①로 두 결정의 참·거짓을 한 번씩 지난다 (분기 커버리지)
 flowchart TB
-  n1["① POINTER = FALSE"] --> n2{"② X > K ?"}
-  n2 -->|"예"| n3["③ POINTER = TRUE"]
-  n2 -->|"아니오"| n4["④ X = X + 2"]
+  n1("① POINTER = FALSE") --> n2{{"② X > K ?"}}
+  n2 -->|"예"| n3("③ POINTER = TRUE")
+  n2 -->|"아니오"| n4("④ X = X + 2")
   n3 --> n4
-  n4 --> n5["⑤ CALL SUB(X, POINTER, RESULT)"]
-  n5 --> n6{"⑥ RESULT > 1 ?"}
-  n6 -->|"예"| n7["⑦ PRINT RESULT"]
+  n4 --> n5("⑤ CALL SUB(X, POINTER, RESULT)")
+  n5 --> n6{{"⑥ RESULT > 1 ?"}}
+  n6 -->|"예"| n7("⑦ PRINT RESULT")
   n6 -->|"아니오"| n1
 ```
 
@@ -118,19 +118,19 @@ flowchart TB
 
 ```mermaid
 제목: 하향식은 아래가 비어 있어 스텁을, 상향식은 위가 비어 있어 드라이버를 만든다 (점선이 임시 모듈)
+%% 폰: LR
 flowchart TB
-  subgraph TD["하향식 통합"]
-    direction TB
-    M1["상위 모듈 (완성)"] --> S1["스텁"]
-    M1 --> S2["스텁"]
-  end
   subgraph BU["상향식 통합"]
     direction TB
-    D1["드라이버"] --> L1["하위 모듈 (완성)"]
-    D1 --> L2["하위 모듈 (완성)"]
+    D1("드라이버") --> L1("하위 모듈 (완성)")
+    D1 --> L2("하위 모듈 (완성)")
   end
-  TD ~~~ BU
-  classDef fake fill:#fff4e5,stroke:#ff9100,stroke-dasharray:5 4,color:#7a4a00
+  subgraph TD["하향식 통합"]
+    direction TB
+    M1("상위 모듈 (완성)") --> S1("스텁")
+    M1 --> S2("스텁")
+  end
+  classDef fake fill:#fff4e5,stroke:#ffb45c,stroke-dasharray:5 4,color:#7a4a00
   class S1,S2,D1 fake
 ```
 
@@ -174,18 +174,12 @@ flowchart TB
 | **알파 테스트(Alpha)** | 개발자 환경(통제된 환경) | 입회함 | "개발자가 지켜보는 가운데", "통제된 환경" |
 | **베타 테스트(Beta)** | 사용자 실제 환경 | 없음 | "다수의 사용자", "실제 업무 환경", "문제점을 보고" |
 
-```mermaid
+```vmodel
 제목: 왼쪽 개발 단계를 같은 높이의 오른쪽 테스트가 검증한다. 테스트는 아래에서 위로 진행
-flowchart TB
-  R["요구사항 분석"] -.- AC["인수 테스트"]
-  A["시스템 설계"] -.- S["시스템 테스트"]
-  D["상세 설계"] -.- I["통합 테스트"]
-  C["코딩"] ==> U["단위 테스트"]
-  R --> A --> D --> C
-  I --> S --> AC
-  U --> I
-  classDef t fill:#e8f8fb,stroke:#00b8d4,color:#0a5d6b
-  class U,I,S,AC t
+요구사항 분석 | 인수 테스트
+시스템 설계 | 시스템 테스트
+상세 설계 | 통합 테스트
+코딩 | 단위 테스트
 ```
 
 ### 기출에서 이렇게 나왔다

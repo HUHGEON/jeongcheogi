@@ -289,14 +289,15 @@ UML 구성요소는 **사물(Things)**, **관계(Relationships)**, **다이어�
 
 ```mermaid
 제목: 화살표 모양으로 관계를 구분한다. 속 찬 마름모 = 포함, 빈 마름모 = 집합, 빈 삼각형 실선 = 일반화, 빈 삼각형 점선 = 실체화
+%% 폰: LR
 classDiagram
-  direction LR
-  Car *-- Engine : 포함 Composition
-  Team o-- Player : 집합 Aggregation
-  Teacher --> Student : 연관 Association
-  Order ..> Payment : 의존 Dependency
-  Animal <|-- Dog : 일반화 Generalization
-  Flyable <|.. Bird : 실체화 Realization
+  direction TB
+  Car *-- Engine : 포함
+  Team o-- Player : 집합
+  Teacher --> Student : 연관
+  Order ..> Payment : 의존
+  Animal <|-- Dog : 일반화
+  Flyable <|.. Bird : 실체화
 ```
 
 ### 한눈에 구분

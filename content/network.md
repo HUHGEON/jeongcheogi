@@ -65,14 +65,13 @@
 
 ```mermaid
 제목: AS 안에서는 IGP(RIP·OSPF), AS와 AS 사이에서는 EGP(BGP)
-flowchart TB
-  subgraph AS1["AS 1"]
-    direction LR
-    R1["라우터"] <-->|"RIP · OSPF"| R2["라우터"]
+%% 폰: TB
+flowchart LR
+  subgraph AS1[" "]
+    R1("AS 1 라우터") <-->|"RIP · OSPF"| R2("AS 1 라우터")
   end
-  subgraph AS2["AS 2"]
-    direction LR
-    R3["라우터"] <-->|"RIP · OSPF"| R4["라우터"]
+  subgraph AS2[" "]
+    R3("AS 2 라우터") <-->|"RIP · OSPF"| R4("AS 2 라우터")
   end
   R2 <==>|"BGP"| R3
 ```
