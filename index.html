@@ -425,8 +425,18 @@ p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
 .bkey b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .bkey b.n{background:var(--accent-soft);border:1px solid var(--accent-line)}.bkey b.h{background:var(--info-soft);border:1px solid #a6e6f1}
 .bkey .bn{color:var(--muted)}
+.idx{display:flex;flex-direction:column;align-items:center;gap:12px}
+.idx .row{display:flex;gap:4px;max-width:100%;overflow-x:auto;padding-bottom:2px}
+.idx .col{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;width:30px}
+.idx .col i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:700;line-height:1}
+.idx .col i.p{color:var(--accent-ink)}
+.idx .col i.m{color:#0a7d90}
+.idx .col b{width:100%;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:7px;font-family:var(--mono);font-size:16px;font-weight:800;color:var(--ink)}
+.idx .key{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:13px;color:var(--text)}
+.idx .key .p{color:var(--accent-ink);font-weight:700}.idx .key .m{color:#0a7d90;font-weight:700}
 @media (max-width:640px){
   .fig{padding:14px 10px 10px;margin:4px -4px 20px}
+  .idx .row{gap:2px}.idx .col{width:25px}.idx .col b{height:30px;font-size:14px}.idx .col i{font-size:11px}
   .brow{gap:6px 8px}.brow .bl{width:100%}
   .oct i{width:15px;height:20px;font-size:11px}
   .out .one{font-size:13px;padding:10px 12px}
@@ -568,12 +578,12 @@ function enhanceBody(body){
   body.querySelectorAll('code').forEach(c=>{if(!c.closest('pre')&&c.textContent.length<=22)c.classList.add('nw')});
   // 그림 블록
   [...body.querySelectorAll('pre > code')].forEach(code=>{
-    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel)/); if(!m) return;
+    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel|idx)/); if(!m) return;
     let src=code.textContent.replace(/\s+$/,''),cap='';
     const c=src.match(/^(?:%%\s*)?제목\s*[:：]\s*(.+)\n/); if(c){cap=c[1];src=src.slice(c[0].length)}
     const fig=document.createElement('figure');fig.className='fig fig-'+m[1];
     if(m[1]==='mermaid'){const d=document.createElement('div');d.className='mmd';d.textContent=src;fig.appendChild(d)}
-    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel})[m[1]](src);
+    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel,idx:renderIdx})[m[1]](src);
     if(cap) fig.insertAdjacentHTML('beforeend',`<figcaption>${esc(cap)}</figcaption>`);
     code.parentNode.replaceWith(fig);
   });
@@ -628,6 +638,12 @@ function renderVModel(src){
   const it=src.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x.length>=2);
   const n=it.length;
   return `<div class="vm" style="--n:${n}"><div class="vm-h"><span>개발 (위에서 아래로)</span><span>테스트 (아래에서 위로)</span></div>${it.map((x,i)=>`<div class="vm-r" style="--i:${i}"><span class="vm-l">${esc(x[0])}</span><i class="vm-k${i===n-1?' last':''}"></i><span class="vm-t">${esc(x[1])}</span></div>`).join('')}</div>`;
+}
+/* 인덱스 그림: 첫 줄의 문자열 글자마다 앞 번호(0부터)와 뒤 번호(-1부터)를 붙인다 */
+function renderIdx(src){
+  const t=[...src.split('\n')[0].trim()],n=t.length;
+  const cols=t.map((ch,i)=>`<span class="col"><i class="p">${i}</i><b>${esc(ch)}</b><i class="m">${i-n}</i></span>`).join('');
+  return `<div class="idx"><div class="row">${cols}</div><div class="key"><span><span class="p">윗줄</span> 앞에서 센 번호</span><span><span class="m">아랫줄</span> 뒤에서 센 번호</span></div></div>`;
 }
 /* 비트 그림: "223.13.234.132/26" */
 function renderBits(src){
