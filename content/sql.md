@@ -17,6 +17,8 @@ SELECT 문의 절은 쓰는 순서가 정해져 있다. `SELECT → FROM → WHE
 | 그룹 최대·최소 | `SELECT 부서번호, MAX(급여), MIN(급여) FROM 사원 GROUP BY 부서번호 HAVING AVG(급여) >= 2000;` | |
 | 패턴 | `SELECT 이름 FROM 학생 WHERE 이름 LIKE '이%';` | "이로 시작" → `'이%'`, "두 번째 글자가 철" → `'_철%'` |
 | 정렬 | `SELECT 이름, 점수 FROM 학생 ORDER BY 점수 DESC;` | "내림차순" → **DESC**, 오름차순은 **ASC**(생략 가능) |
+| 다중 정렬 | `SELECT 부서번호, 이름, 급여 FROM 사원 ORDER BY 부서번호 DESC, 급여 DESC;` | 앞 컬럼으로 먼저 정렬하고, 값이 같을 때만 뒤 컬럼으로 정렬 |
+| 별칭 | `SELECT 부서번호, SUM(급여) AS 합계 FROM 사원 GROUP BY 부서번호;` | **AS**는 생략할 수 있다 (`SUM(급여) 합계`) |
 | 목록 | `SELECT * FROM 학생 WHERE 학과 IN ('컴공', '전자');` | "중 하나" → **IN** |
 | 범위 | `SELECT * FROM 학생 WHERE 점수 BETWEEN 70 AND 85;` | 양 끝 포함 |
 | 조인 | `SELECT 이름, 부서명 FROM 사원 JOIN 부서 ON 사원.부서번호 = 부서.부서번호;` | 명시적 조인 조건 → **ON** |
@@ -24,7 +26,9 @@ SELECT 문의 절은 쓰는 순서가 정해져 있다. `SELECT → FROM → WHE
 | 중복 제거 | `SELECT DISTINCT 학과 FROM 학생;` | |
 | NULL 검사 | `SELECT 이름 FROM 학생 WHERE 점수 IS NULL;` | `= NULL`은 항상 거짓 |
 
-`LIKE`의 `%`는 0글자 이상, `_`는 정확히 한 글자다. `ALL`과 `ANY`는 sqlite가 지원하지 않아 아래 예제에서는 같은 뜻의 `MAX`/`MIN`으로 바꿔 실행했다.
+`LIKE`의 `%`는 0글자 이상, `_`는 정확히 한 글자다. `'%철%'`은 "철이 포함된", `'_철'`은 "철 앞에 딱 한 글자"다.
+
+서브쿼리 비교 연산자: `> ALL`은 서브쿼리 결과의 **최댓값보다** 커야 참이고, `> ANY`는 **최솟값보다** 크기만 하면 참이다(`< ALL`은 최솟값보다 작아야, `< ANY`는 최댓값보다 작으면 참). **ANY와 SOME은 같은 뜻**이다. `IN`은 `= ANY`와, `NOT IN`은 `<> ALL`과 같다. `EXISTS`는 값을 비교하지 않고 서브쿼리가 행을 하나라도 돌려주는지만 본다. `ALL`과 `ANY`는 sqlite가 지원하지 않아 아래 예제에서는 같은 뜻의 `MAX`/`MIN`으로 바꿔 실행했다.
 
 ```sql
 CREATE TABLE 사원(사번 INT, 이름 TEXT, 부서번호 INT, 급여 INT);
@@ -83,7 +87,11 @@ SELECT COUNT(*) FROM 사원 WHERE 부서번호 IS NULL;
 | `UNION ALL` | 중복을 남긴다 |
 | `ON DELETE CASCADE` | 부모 행을 지우면 그 행을 참조하던 자식 행도 **같이 삭제** |
 | `ON DELETE SET NULL` | 부모 행을 지우면 자식의 외래키를 **NULL로** |
-| 옵션 없음 | 참조하는 자식이 있으면 부모 삭제가 **거부** |
+| `ON DELETE SET DEFAULT` | 부모 행을 지우면 자식의 외래키를 그 컬럼의 **DEFAULT 값으로** |
+| `ON DELETE RESTRICT` | 참조하는 자식이 있으면 부모 삭제를 **즉시 거부** |
+| `ON DELETE NO ACTION` · 옵션 없음 | 참조하는 자식이 있으면 부모 삭제가 **거부**된다 (RESTRICT와 결과는 같고, 검사 시점만 문장 끝으로 미룰 수 있다) |
+
+ON UPDATE도 같은 옵션을 쓴다. 부모의 키 값이 바뀔 때 자식을 어떻게 할지 정한다.
 
 ```sql
 CREATE TABLE 수강(학번 INT, 과목코드 TEXT, 성적 TEXT);
@@ -135,6 +143,22 @@ DELETE FROM 부서3 WHERE 부서번호 = 10;
 SELECT * FROM 사원3;
 ```
 출력: `1 | NULL`, `2 | NULL`, `3 | 20` (행은 그대로 3개, 외래키만 비었다)
+
+```sql
+CREATE TABLE 부서4(부서번호 INT PRIMARY KEY, 부서명 TEXT);
+INSERT INTO 부서4 VALUES (0,'미배정'),(10,'개발'),(20,'영업');
+CREATE TABLE 사원4(사번 INT PRIMARY KEY,
+  부서번호 INT DEFAULT 0 REFERENCES 부서4(부서번호) ON DELETE SET DEFAULT);
+INSERT INTO 사원4 VALUES (1,10),(2,20);
+DELETE FROM 부서4 WHERE 부서번호 = 10;
+SELECT * FROM 사원4;
+
+CREATE TABLE 사원5(사번 INT PRIMARY KEY,
+  부서번호 INT REFERENCES 부서4(부서번호) ON DELETE RESTRICT);
+INSERT INTO 사원5 VALUES (1,20);
+DELETE FROM 부서4 WHERE 부서번호 = 20;   -- 사원5가 참조 중
+```
+출력: `1 | 0`, `2 | 20` (외래키가 DEFAULT 값 0으로 바뀌었다) / 마지막 DELETE는 `FOREIGN KEY constraint failed`로 거부된다
 
 ### 기출에서 이렇게 나왔다
 
@@ -224,7 +248,7 @@ INSERT INTO 교수 VALUES (2,'이교수','lee@x.kr',50,'D2');
 | 문장 | 완성 문장 |
 |---|---|
 | 컬럼 추가 | `ALTER TABLE 교수 ADD 전화 TEXT;` |
-| 컬럼 변경·삭제 | `ALTER TABLE 교수 MODIFY 나이 INT;` / `ALTER TABLE 교수 DROP COLUMN 전화;` (표준 문법, sqlite에 MODIFY 없음) |
+| 컬럼 변경·삭제 | `ALTER TABLE 교수 ALTER 나이 SET DEFAULT 30;` (표준 SQL. Oracle·MySQL은 `ALTER TABLE 교수 MODIFY 나이 INT;`) / `ALTER TABLE 교수 DROP COLUMN 전화;` (DROP COLUMN은 sqlite에서 실행 확인. 컬럼을 바꾸는 ALTER·MODIFY는 sqlite에 없어 실행 확인 안 함) |
 | 인덱스 | `CREATE INDEX idx_교수_이름 ON 교수(이름);` |
 | 뷰 | `CREATE VIEW 고령교수 AS SELECT 이름, 나이 FROM 교수 WHERE 나이 >= 45;` |
 | 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남', '여'));` (표준 문법, sqlite 미지원) |
@@ -495,7 +519,14 @@ GRANT는 `TO`, REVOKE는 `FROM`이 짝이다. 권한 종류는 SELECT·INSERT·U
 | **DCL(Data Control Language)** | GRANT·REVOKE | 권한 |
 | **TCL(Transaction Control Language)** | COMMIT·ROLLBACK·SAVEPOINT | 트랜잭션 제어. DCL에 포함시키기도 한다 |
 
-SELECT 문은 `SELECT [DISTINCT] 컬럼 FROM 테이블 [WHERE 조건] [GROUP BY 컬럼] [HAVING 그룹조건] [ORDER BY 컬럼 ASC|DESC]` 순서로 쓴다. 처리는 FROM(테이블 확보) → WHERE(행 선택) → GROUP BY(묶기) → HAVING(그룹 선택) → SELECT(열 선택·집계 계산) → ORDER BY(정렬) 순이다. 이 순서 때문에 WHERE에서는 그룹 함수를 쓸 수 없고, HAVING은 GROUP BY 없이는 뜻이 없다.
+SELECT 문은 `SELECT [DISTINCT] 컬럼 FROM 테이블 [WHERE 조건] [GROUP BY 컬럼] [HAVING 그룹조건] [ORDER BY 컬럼 ASC|DESC]` 순서로 쓴다. 처리는 FROM(테이블 확보) → WHERE(행 선택) → GROUP BY(묶기) → HAVING(그룹 선택) → SELECT(열 선택·집계 계산) → ORDER BY(정렬) 순이다. 이 순서 때문에 WHERE에서는 그룹 함수를 쓸 수 없다. HAVING은 보통 GROUP BY와 함께 쓰지만, GROUP BY 없이 쓰면 테이블 전체를 한 그룹으로 본다.
+
+```sql
+-- 사원 테이블(5행)
+SELECT COUNT(*) FROM 사원 HAVING COUNT(*) >= 5;
+SELECT COUNT(*) FROM 사원 HAVING COUNT(*) >= 6;
+```
+출력: `5` / 행 없음 (전체 5행이 한 그룹)
 
 ## 조인·서브쿼리·집합 연산의 나머지 문법
 출제: 없음
@@ -545,7 +576,15 @@ SELECT 값 FROM A EXCEPT SELECT 값 FROM B;
 
 ### 개념
 
-**뷰(View)**는 SELECT 문을 이름 붙여 저장한 가상 테이블이다. 물리적으로 데이터를 갖지 않고 조회할 때마다 원본에서 계산한다. 보안(필요한 열만 노출)과 편의(복잡한 조인을 단순 이름으로)가 목적이다. 원본 테이블을 DROP하면 뷰도 쓸 수 없고, 뷰를 통한 INSERT·UPDATE는 조인·집계가 없는 단순 뷰에서만 가능하다. 뷰는 ALTER로 바꿀 수 없고 DROP 뒤 다시 CREATE한다.
+**뷰(View)**는 하나 이상의 기본 테이블에서 유도한 SELECT 문을 이름 붙여 저장한 가상 테이블이다. 물리적으로 데이터를 갖지 않고 조회할 때마다 원본에서 계산하므로 원본이 바뀌면 뷰 결과도 바로 바뀐다. 원본 테이블을 DROP하면 뷰도 쓸 수 없다.
+
+| 장점 | 단점 |
+|---|---|
+| **논리적 데이터 독립성**: 기본 테이블 구조가 바뀌어도 뷰로 접근하는 응용은 영향이 적다 | 뷰에는 독립적인 **인덱스를 만들 수 없다** |
+| **보안**: 필요한 열·행만 사용자에게 보인다 | **ALTER로 정의를 바꿀 수 없다**. DROP 뒤 다시 CREATE한다 |
+| **편의**: 복잡한 조인·조건을 이름 하나로 조회한다 | **삽입·갱신·삭제 제약**: 조인·집계 함수·DISTINCT·GROUP BY가 든 뷰는 갱신할 수 없다 |
+
+**WITH CHECK OPTION**은 뷰를 정의한 WHERE 조건을 벗어나는 INSERT·UPDATE를 거부한다. 예를 들어 `CREATE VIEW 개발부 AS SELECT * FROM 사원 WHERE 부서번호 = 10 WITH CHECK OPTION;`이면 이 뷰로 부서번호 20인 행을 넣거나 부서번호를 20으로 바꿀 수 없다. (sqlite는 이 옵션을 지원하지 않아 실행 확인 안 함)
 
 **인덱스(Index)**는 검색 속도를 위해 <키 값, 주소> 쌍을 따로 정렬해 둔 구조다. 조회는 빨라지지만 INSERT·UPDATE·DELETE마다 인덱스도 갱신해야 해서 쓰기 비용이 늘고 공간을 차지한다. PRIMARY KEY와 UNIQUE에는 자동으로 만들어진다.
 
@@ -573,3 +612,78 @@ ROLLBACK;
 SELECT COUNT(*) FROM 사원;
 ```
 출력: `5` (DELETE는 ROLLBACK으로 되돌아온다)
+
+## 내장 함수·윈도우 함수
+출제: 없음
+
+### 개념
+
+**단일 행 함수**는 행 하나마다 계산해 값 하나를 돌려준다. 입력 행 수와 출력 행 수가 같다. **집계(다중 행) 함수**(COUNT·SUM·AVG·MAX·MIN)는 여러 행을 묶어 값 하나로 줄인다.
+
+| 분류 | 함수 |
+|---|---|
+| 문자 | `UPPER`·`LOWER`(대·소문자), `SUBSTR(s, 시작, 길이)`(부분 추출), `LENGTH`(길이), `CONCAT`(연결. 연산자로는 세로줄 두 개), `TRIM`(양끝 공백 제거), `REPLACE(s, a, b)`(치환) |
+| 숫자 | `ROUND(n, 자리)`(반올림), `TRUNC(n, 자리)`(버림), `MOD(a, b)`(나머지), `ABS`(절댓값), `CEIL`(올림), `FLOOR`(내림) |
+| 날짜·변환 | `SYSDATE`(현재 시각), `ADD_MONTHS`, `TO_CHAR`(숫자·날짜 → 문자), `TO_DATE`(문자 → 날짜), `TO_NUMBER`(문자 → 숫자) |
+| NULL 처리 | `NVL(a, b)`(a가 NULL이면 b), `NVL2(a, b, c)`(a가 NULL이 아니면 b, NULL이면 c), `COALESCE(a, b, ...)`(처음으로 NULL이 아닌 값), `NULLIF(a, b)`(같으면 NULL, 다르면 a) |
+
+날짜·변환 함수와 NVL·NVL2·TRUNC(자릿수 지정)는 Oracle 함수라 sqlite에서 실행하지 않았다. 아래는 sqlite에 있는 함수만 실행한 것이다.
+
+```sql
+SELECT UPPER('abc'), SUBSTR('database', 1, 4), LENGTH('hello'), REPLACE('aXbX', 'X', '-');
+SELECT ROUND(3.146, 1), ROUND(3.156, 1), ABS(-7), 17 % 5;
+SELECT COALESCE(NULL, NULL, 3), NULLIF(5, 5), NULLIF(5, 3);
+```
+출력: `ABC | data | 5 | a-b-` / `3.1 | 3.2 | 7 | 2` / `3 | NULL | 5`
+
+**윈도우 함수**는 행을 줄이지 않고 각 행 옆에 그룹 안의 순위·합계를 붙인다. `OVER (PARTITION BY 그룹 ORDER BY 정렬)`로 범위를 정한다. GROUP BY는 그룹당 한 행만 남기지만 윈도우 함수는 원래 행이 그대로 남는다.
+
+| 함수 | 같은 값 처리 | 80점이 둘일 때 |
+|---|---|---|
+| **RANK()** | 공동 순위를 주고 그 수만큼 건너뛴다 | 1, 2, 2, 4 |
+| **DENSE_RANK()** | 공동 순위를 주되 건너뛰지 않는다 | 1, 2, 2, 3 |
+| **ROW_NUMBER()** | 같아도 무조건 다른 번호 | 1, 2, 3, 4 |
+
+```sql
+CREATE TABLE 성적(이름 TEXT, 반 TEXT, 점수 INT);
+INSERT INTO 성적 VALUES ('가','A',90),('나','A',80),('다','A',80),('라','A',70),('마','B',85),('바','B',60);
+
+SELECT 이름, 점수,
+  RANK()       OVER (ORDER BY 점수 DESC) AS 랭크,
+  DENSE_RANK() OVER (ORDER BY 점수 DESC) AS 덴스,
+  ROW_NUMBER() OVER (ORDER BY 점수 DESC, 이름) AS 번호
+FROM 성적 WHERE 반 = 'A' ORDER BY 번호;
+```
+출력: `가 90 1 1 1`, `나 80 2 2 2`, `다 80 2 2 3`, `라 70 4 3 4`
+
+```sql
+SELECT 이름, 반, 점수, SUM(점수) OVER (PARTITION BY 반) AS 반합계 FROM 성적 ORDER BY 반, 점수 DESC;
+```
+출력: `가 A 90 320`, `나 A 80 320`, `다 A 80 320`, `라 A 70 320`, `마 B 85 145`, `바 B 60 145` (6행이 그대로 남고 반별 합계가 옆에 붙는다. `GROUP BY 반`이었다면 `A 320`, `B 145` 두 행)
+
+## 프로시저·트리거·사용자 정의 함수·커서
+출제: 없음
+
+### 개념
+
+| 객체 | 뜻 | 구별 단서 |
+|---|---|---|
+| **저장 프로시저(Stored Procedure)** | 자주 쓰는 SQL 묶음을 미리 컴파일해 DB에 저장해 두고 호출해 쓰는 것 | 반환값 없이 OUT 매개변수로 결과를 넘긴다. `EXECUTE`로 호출 |
+| **사용자 정의 함수(UDF)** | 사용자가 만든 함수. 반드시 값 하나를 **RETURN**한다 | SELECT 문 안에서 호출할 수 있다 |
+| **트리거(Trigger)** | INSERT·UPDATE·DELETE 같은 이벤트가 일어나면 **자동으로** 실행되는 프로시저 | 사용자 정의 무결성 구현, 변경 이력 기록 |
+| **커서(Cursor)** | 여러 행으로 된 SELECT 결과를 한 행씩 가리키며 처리하는 포인터 | 명시적 커서는 **DECLARE → OPEN → FETCH → CLOSE** |
+
+커서는 DBMS가 일반 SQL을 실행할 때 알아서 만드는 **묵시적 커서(Implicit)**와 개발자가 직접 선언·제어하는 **명시적 커서(Explicit)**로 나뉜다. 프로시저·UDF·커서는 sqlite에 없어 실행하지 않았다. 트리거는 sqlite로 확인했다.
+
+```sql
+CREATE TABLE 사원(사번 INT, 급여 INT);
+CREATE TABLE 급여이력(사번 INT, 이전 INT, 이후 INT);
+CREATE TRIGGER trg_급여 AFTER UPDATE OF 급여 ON 사원
+BEGIN
+  INSERT INTO 급여이력 VALUES (OLD.사번, OLD.급여, NEW.급여);
+END;
+INSERT INTO 사원 VALUES (1, 3000);
+UPDATE 사원 SET 급여 = 3500 WHERE 사번 = 1;
+SELECT * FROM 급여이력;
+```
+출력: `1 | 3000 | 3500` (UPDATE만 했는데 트리거가 이력 행을 자동으로 넣었다. OLD는 변경 전 행, NEW는 변경 후 행)
