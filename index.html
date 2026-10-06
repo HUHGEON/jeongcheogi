@@ -232,12 +232,12 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .toc a.on{border-color:var(--accent);color:var(--accent-ink);font-weight:700}
 
 /* 이전/다음 */
-.pager{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:50px}
-.pager a{border:1px solid var(--line);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:3px}
-.pager a:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.pager{display:flex;justify-content:space-between;gap:20px;margin-top:44px;padding-top:14px;border-top:1px solid var(--line)}
+.pager a{display:flex;flex-direction:column;gap:2px;min-width:0;max-width:48%;padding:4px 0}
 .pager .k{font-size:12.5px;color:var(--muted)}
-.pager .t{font-weight:800;color:var(--ink)}
-.pager .nx{text-align:right;grid-column:2}
+.pager .t{font-size:14.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pager a:hover .t{color:var(--accent)}
+.pager .nx{margin-left:auto;text-align:right;align-items:flex-end}
 
 /* 하단 탭 (폰) */
 .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;height:calc(var(--tab) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
@@ -346,8 +346,8 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
   .card .th{height:76px}
   .card .th b{font-size:22px}
   .sec-t{font-size:21px;margin:30px 0 14px}
-  .pager{gap:10px;margin-top:34px}
-  .pager a{padding:12px 14px}
+  .pager{gap:14px;margin-top:32px}
+  .pager .t{font-size:14px}
 }
 .rk{display:none}
 .tocbox .hd .tg{display:none;margin-left:10px;font-weight:400;font-size:12.5px;opacity:.9}
@@ -732,7 +732,7 @@ async function showArea(id){
     return `<a class="unit ${done[s.id]?'dn':''}" href="#${s.id}"><span class="no">${pad(s.num)}</span><span class="bd"><b>${esc(s.title)}</b>${kv?`<small>${esc(kv.textContent.replace(/^(형태|함정)/,'$1 · '))}</small>`:''}</span><span class="rt">${s.rounds.length?`<em>기출 ${s.rounds.length}회</em>`:'<i>기출 없음</i>'}${done[s.id]?'<u>봤음</u>':''}</span></a>`}).join('')}</div>${areaPager(id)}</div>`;
   window.scrollTo(0,0);
 }
-function areaPager(id){const i=PAGES.findIndex(p=>p.id===id),a=PAGES[i-1],b=PAGES[i+1];return `<div class="pager">${a?`<a href="#${a.id}"><span class="k">이전 영역</span><span class="t">${a.title}</span></a>`:''}${b?`<a class="nx" href="#${b.id}"><span class="k">다음 영역</span><span class="t">${b.title}</span></a>`:''}</div>`}
+function areaPager(id){const i=PAGES.findIndex(p=>p.id===id),a=PAGES[i-1],b=PAGES[i+1];return `<div class="pager">${a?`<a href="#${a.id}"><span class="k">‹ 이전 영역</span><span class="t">${a.title}</span></a>`:''}${b?`<a class="nx" href="#${b.id}"><span class="k">다음 영역 ›</span><span class="t">${b.title}</span></a>`:''}</div>`}
 
 /* 묶음 페이지 = 소단위 하나 */
 async function showSet(id,n){
@@ -744,7 +744,7 @@ async function showSet(id,n){
   const prev=pg.sets[n-2]||null,next=pg.sets[n]||null;
   const pi=PAGES.findIndex(x=>x.id===id),nextArea=PAGES[pi+1],prevArea=PAGES[pi-1];
   main.innerHTML=`<div class="hero slim"><span class="tag">${p.title} · ${n}/${pg.sets.length}</span><h1>${esc(s.title)}</h1></div><div class="post"><div id="body"></div>
-  <div class="pager">${prev?`<a href="#${prev.id}"><span class="k">이전</span><span class="t">${esc(prev.title)}</span></a>`:prevArea?`<a href="#${prevArea.id}"><span class="k">이전 영역</span><span class="t">${prevArea.title}</span></a>`:''}${next?`<a class="nx" href="#${next.id}"><span class="k">다음</span><span class="t">${esc(next.title)}</span></a>`:nextArea?`<a class="nx" href="#${nextArea.id}"><span class="k">다음 영역</span><span class="t">${nextArea.title}</span></a>`:''}</div>
+  <div class="pager">${prev?`<a href="#${prev.id}"><span class="k">‹ 이전</span><span class="t">${esc(prev.title)}</span></a>`:prevArea?`<a href="#${prevArea.id}"><span class="k">‹ 이전 영역</span><span class="t">${prevArea.title}</span></a>`:''}${next?`<a class="nx" href="#${next.id}"><span class="k">다음 ›</span><span class="t">${esc(next.title)}</span></a>`:nextArea?`<a class="nx" href="#${nextArea.id}"><span class="k">다음 영역 ›</span><span class="t">${nextArea.title}</span></a>`:''}</div>
   <a class="back" href="#${id}">${p.title} 목차로</a></div>`;
   const body=main.querySelector('#body');const sec=pg.bodyEl.children[n-1].cloneNode(true);sec.classList.add('single');sec.querySelector('.set-h h2').remove();sec.querySelector('.set-h .no').remove();sec.querySelector('.chk').insertAdjacentHTML('beforeend','<span>다 봤음</span>');body.appendChild(sec);
   const phone=matchMedia('(max-width:640px)').matches;
