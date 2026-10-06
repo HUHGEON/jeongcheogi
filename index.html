@@ -352,6 +352,49 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .rk{display:none}
 .tocbox .hd .tg{display:none;margin-left:10px;font-weight:400;font-size:12.5px;opacity:.9}
 
+/* 코드 줄 */
+.code pre code .ln{display:block}
+.code.wrap pre{white-space:pre-wrap;overflow-x:hidden}
+.code.wrap pre code .ln{padding-left:calc((var(--i) + 2) * 1ch);text-indent:calc((var(--i) + 2) * -1ch);overflow-wrap:anywhere}
+.out .one code{background:none;border:0;padding:0;font-size:inherit;color:inherit}
+.out .one{padding:11px 16px;font-family:var(--mono);font-size:14px;line-height:1.7;color:var(--ink);white-space:normal;overflow-wrap:anywhere}
+p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
+/* 그림 */
+.fig{margin:6px 0 24px;padding:18px 16px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.fig figcaption{margin-top:12px;text-align:center;font-size:13.5px;color:var(--muted)}
+.fig .mmd{display:flex;justify-content:center;overflow-x:auto;min-height:40px;color:transparent}
+.fig .mmd svg{max-width:100%;height:auto}
+.fig .mmd[data-processed]{color:inherit}
+.fig-err .mmd{color:var(--muted);white-space:pre-wrap;font-family:var(--mono);font-size:13px;justify-content:flex-start}
+.gantt{padding:4px 2px 0}
+.gbar{display:flex;height:38px;border-radius:6px;overflow:hidden;border:1px solid var(--line-2)}
+.gbar span{background:var(--c);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;border-right:1px solid rgba(255,255,255,.65);min-width:0;overflow:hidden;white-space:nowrap}
+.gbar span:last-child{border-right:0}
+.gticks{position:relative;height:22px;margin-top:4px}
+.gticks i{position:absolute;transform:translateX(-50%);font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.gticks i:first-child{transform:none}.gticks i:last-child{transform:translateX(-100%)}
+.glegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px;color:var(--text)}
+.glegend b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bits{display:flex;flex-direction:column;gap:10px;font-family:var(--mono)}
+.brow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.brow .bl{width:64px;font-family:var(--body);font-weight:800;font-size:13px;color:var(--ink)}
+.oct{display:flex;flex-direction:column;align-items:center;gap:3px}
+.oct .cells{display:flex;gap:2px}
+.oct i{font-style:normal;width:17px;height:22px;display:grid;place-items:center;font-size:12px;border-radius:3px}
+.oct i.n{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
+.oct i.h{background:var(--info-soft);color:#0a7d90}
+.oct em{font-style:normal;font-size:12.5px;color:var(--ink);font-weight:700}
+.bkey{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--body);font-size:13px;color:var(--text);padding-top:4px;border-top:1px dashed var(--line)}
+.bkey b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bkey b.n{background:var(--accent-soft);border:1px solid var(--accent-line)}.bkey b.h{background:var(--info-soft);border:1px solid #a6e6f1}
+.bkey .bn{color:var(--muted)}
+@media (max-width:640px){
+  .fig{padding:14px 10px 10px;margin:4px -4px 20px}
+  .brow{gap:6px 8px}.brow .bl{width:100%}
+  .oct i{width:15px;height:20px;font-size:11px}
+  .out .one{font-size:13px;padding:10px 12px}
+  .out pre{white-space:pre-wrap;overflow-wrap:anywhere}
+}
 /* 소단위 */
 .set.single{padding-top:6px}
 .set.single .set-h{justify-content:flex-end;padding:0;margin:0 0 6px}
@@ -486,6 +529,17 @@ function enhanceBody(body){
     }
   });
   body.querySelectorAll('code').forEach(c=>{if(!c.closest('pre')&&c.textContent.length<=22)c.classList.add('nw')});
+  // 그림 블록
+  [...body.querySelectorAll('pre > code')].forEach(code=>{
+    const m=code.className.match(/language-(mermaid|gantt|bits)/); if(!m) return;
+    let src=code.textContent.replace(/\s+$/,''),cap='';
+    const c=src.match(/^(?:%%\s*)?제목\s*[:：]\s*(.+)\n/); if(c){cap=c[1];src=src.slice(c[0].length)}
+    const fig=document.createElement('figure');fig.className='fig fig-'+m[1];
+    if(m[1]==='mermaid'){const d=document.createElement('div');d.className='mmd';d.textContent=src;fig.appendChild(d)}
+    else fig.innerHTML=m[1]==='gantt'?renderGantt(src):renderBits(src);
+    if(cap) fig.insertAdjacentHTML('beforeend',`<figcaption>${esc(cap)}</figcaption>`);
+    code.parentNode.replaceWith(fig);
+  });
   // 코드 블록 → macOS 창, "출력:" + 코드 블록 → 출력 상자
   [...body.querySelectorAll('pre')].forEach(pre=>{
     const prev=pre.previousElementSibling;
@@ -502,7 +556,7 @@ function enhanceBody(body){
   // "출력: 값" 처럼 한 줄로 쓴 것
   [...body.querySelectorAll('p')].forEach(p=>{
     const m=p.innerHTML.match(/^출력\s*[:：]\s*(.+)$/s);
-    if(m && !p.closest('.out')){const box=document.createElement('div');box.className='out';box.innerHTML='<div class="lb">실행 결과</div><pre></pre>';box.querySelector('pre').innerHTML=m[1];p.replaceWith(box);}
+    if(m && !p.closest('.out')){const box=document.createElement('div');box.className='out';box.innerHTML='<div class="lb">실행 결과</div><div class="one"></div>';box.querySelector('.one').innerHTML=m[1];p.replaceWith(box);}
   });
   // 소제목 아래를 안내 상자로
   [...body.querySelectorAll(':scope > h3')].forEach(h=>{
@@ -515,6 +569,52 @@ function enhanceBody(body){
   });
 }
 
+/* 간트 차트: 각 줄 "P1 0-1" */
+const GC=['#f65660','#3b82f6','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899'];
+function renderGantt(src){
+  const segs=src.split('\n').map(l=>l.trim().match(/^(\S+)\s+(\d+)\s*-\s*(\d+)/)).filter(Boolean).map(m=>({p:m[1],s:+m[2],e:+m[3]}));
+  if(!segs.length) return '';
+  const T=Math.max(...segs.map(x=>x.e)),ps=[...new Set(segs.map(x=>x.p))].sort();
+  const col=p=>GC[ps.indexOf(p)%GC.length];
+  const ticks=[...new Set(segs.flatMap(x=>[x.s,x.e]))].sort((a,b)=>a-b);
+  return `<div class="gantt" role="img" aria-label="간트 차트"><div class="gbar">${segs.map(x=>`<span style="flex:${x.e-x.s};--c:${col(x.p)}" title="${x.p} ${x.s}~${x.e}">${x.e-x.s>=2?x.p:''}</span>`).join('')}</div>
+  <div class="gticks">${ticks.map(t=>`<i style="left:${t/T*100}%">${t}</i>`).join('')}</div>
+  <div class="glegend">${ps.map(p=>`<span><b style="background:${col(p)}"></b>${p}</span>`).join('')}</div></div>`;
+}
+/* 비트 그림: "223.13.234.132/26" */
+function renderBits(src){
+  return src.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const m=l.match(/^([\d.]+)\s*\/\s*(\d+)(.*)$/); if(!m) return '';
+    const oct=m[1].split('.').map(Number),n=+m[2],note=m[3].trim();
+    const mask=[0,1,2,3].map(i=>{const b=Math.max(0,Math.min(8,n-i*8));return (0xff<<(8-b))&0xff});
+    const net=oct.map((o,i)=>o&mask[i]);
+    const row=(vals,label)=>`<div class="brow"><span class="bl">${label}</span>${vals.map((v,i)=>`<span class="oct"><span class="cells">${[...v.toString(2).padStart(8,'0')].map((b,j)=>`<i class="${i*8+j<n?'n':'h'}">${b}</i>`).join('')}</span><em>${v}</em></span>`).join('')}</div>`;
+    return `<div class="bits">${row(oct,'IP')}${row(mask,'마스크')}${row(net,'네트워크')}
+      <div class="bkey"><span><b class="n"></b>네트워크 ${n}비트</span><span><b class="h"></b>호스트 ${32-n}비트</span>${note?`<span class="bn">${esc(note)}</span>`:''}</div></div>`;
+  }).join('');
+}
+/* 코드 줄마다 감싸기: 줄바꿈 모드에서 이어지는 줄을 들여쓰기 아래로 맞춘다 */
+function lineify(code){
+  const html=code.innerHTML,re=/(<span[^>]*>)|(<\/span>)|(\n)|([^<\n]+|<[^>]*>)/g;let m,stack=[],line='';const lines=[];
+  while((m=re.exec(html))){if(m[1]){stack.push(m[1]);line+=m[1]}else if(m[2]){stack.pop();line+=m[2]}else if(m[3]){line+='</span>'.repeat(stack.length);lines.push(line);line=stack.join('')}else line+=m[4]}
+  lines.push(line+'</span>'.repeat(stack.length));
+  while(lines.length&&!lines[lines.length-1].replace(/<[^>]+>/g,'').trim())lines.pop();
+  code.innerHTML=lines.map(l=>{const ind=(l.replace(/<[^>]+>/g,'').match(/^ */)[0].length);return `<span class="ln" style="--i:${ind}">${l||' '}</span>`}).join('');
+}
+let mmdLoad=null;
+function loadMermaid(){
+  if(window.mermaid) return Promise.resolve();
+  if(mmdLoad) return mmdLoad;
+  return mmdLoad=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)}).then(()=>{
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'"Nanum Gothic",sans-serif',
+      flowchart:{htmlLabels:true,curve:'basis',padding:12},
+      themeVariables:{fontSize:'15px',primaryColor:'#fdecee',primaryBorderColor:'#f65660',primaryTextColor:'#262d40',secondaryColor:'#e8f8fb',secondaryBorderColor:'#00b8d4',tertiaryColor:'#f6f7f9',tertiaryBorderColor:'#d5d9df',lineColor:'#7a8288',clusterBkg:'#f6f7f9',clusterBorder:'#d5d9df',edgeLabelBackground:'#ffffff',noteBkgColor:'#fff4e5',noteBorderColor:'#ff9100'}});
+  });
+}
+async function drawFigures(root){
+  const nodes=[...root.querySelectorAll('.mmd:not([data-processed])')]; if(!nodes.length) return;
+  try{await loadMermaid();await mermaid.run({nodes})}catch(e){nodes.forEach(n=>{if(!n.querySelector('svg'))n.closest('.fig').classList.add('fig-err')})}
+}
 function parsePage(id,md){
   const root=document.createElement('div');root.innerHTML=marked.parse(preprocess(md));
   const intro=document.createElement('div'),out=document.createElement('div'),sets=[];let cur=null,n=0,title='';
@@ -537,7 +637,7 @@ function parsePage(id,md){
     (cur?cur.querySelector('.prose'):intro).appendChild(node);
   });
   out.querySelectorAll('.prose').forEach(enhanceBody);
-  sets.forEach((s,i)=>{s.text=out.children[i].textContent.replace(/\s+/g,' ').trim()});
+  sets.forEach((s,i)=>{const c=out.children[i].cloneNode(true);c.querySelectorAll('.fig').forEach(f=>f.remove());s.text=c.textContent.replace(/\s+/g,' ').trim()});
   return {title,introHTML:intro.innerHTML,bodyEl:out,sets};
 }
 async function load(id){
@@ -588,12 +688,15 @@ async function showSet(id,n){
   <div class="pager">${prev?`<a href="#${prev.id}"><span class="k">이전</span><span class="t">${esc(prev.title)}</span></a>`:prevArea?`<a href="#${prevArea.id}"><span class="k">이전 영역</span><span class="t">${prevArea.title}</span></a>`:''}${next?`<a class="nx" href="#${next.id}"><span class="k">다음</span><span class="t">${esc(next.title)}</span></a>`:nextArea?`<a class="nx" href="#${nextArea.id}"><span class="k">다음 영역</span><span class="t">${nextArea.title}</span></a>`:''}</div>
   <a class="back" href="#${id}">${p.title} 목차로</a></div>`;
   const body=main.querySelector('#body');const sec=pg.bodyEl.children[n-1].cloneNode(true);sec.classList.add('single');sec.querySelector('.set-h h2').remove();sec.querySelector('.set-h .no').remove();sec.querySelector('.chk').insertAdjacentHTML('beforeend','<span>다 봤음</span>');body.appendChild(sec);
-  body.querySelectorAll('pre code').forEach(el=>{if(el.closest('.code'))try{hljs.highlightElement(el)}catch(e){}});
+  const phone=matchMedia('(max-width:640px)').matches;
+  body.querySelectorAll('.code').forEach(c=>{const el=c.querySelector('pre code');try{hljs.highlightElement(el)}catch(e){}lineify(el);if(phone){c.classList.add('wrap');c.querySelector('.wr').textContent='가로 보기'}});
+  if(phone) body.querySelectorAll('.tbl.keep').forEach(w=>{if(w.scrollWidth>w.clientWidth+2){if(w.querySelectorAll('thead th').length<=6){w.classList.remove('keep');w.classList.add('stack')}else w.insertAdjacentHTML('beforebegin','<p class="swipe">표가 넓어요. 옆으로 밀어서 보세요 →</p>')}});
+  drawFigures(body);
   applyDone(sec);
   body.addEventListener('click',e=>{
     const b=e.target.closest('.chk');
     if(b){const k=b.dataset.set;if(done[k])delete done[k];else done[k]=true;store.set('jcg-done',done);applyDone(sec);renderSide(id,s.id);return}
-    const wr=e.target.closest('.wr');if(wr){wr.closest('.code').classList.toggle('wrap');return}
+    const wr=e.target.closest('.wr');if(wr){const c=wr.closest('.code');c.classList.toggle('wrap');wr.textContent=c.classList.contains('wrap')?'가로 보기':'줄바꿈';return}
     const cp=e.target.closest('.cp');
     if(cp){const txt=cp.closest('.code').querySelector('pre').innerText;const ok=()=>{cp.textContent='복사됨';setTimeout(()=>cp.textContent='복사',1200)};
       try{navigator.clipboard.writeText(txt).then(ok,()=>{selectText(cp)})}catch(err){selectText(cp)}}

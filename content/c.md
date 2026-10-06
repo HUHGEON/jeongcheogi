@@ -166,6 +166,14 @@ int main() {
 
 그림을 그릴 때는 노드마다 `[값 | next]` 상자를 쓰고, 포인터 변수(head, p, prev)를 상자 위에 이름표로 붙인다. 한 문장이 실행될 때마다 화살표 하나만 바꾼다.
 
+```mermaid
+제목: 노드는 값과 다음 노드의 주소(next)를 가진다. 마지막 노드의 next는 NULL
+flowchart LR
+  H(["head"]) --> A["10 | next"]
+  A --> B["20 | next"]
+  B --> N(["NULL"])
+```
+
 ### 예제
 ```c
 #include <stdio.h>

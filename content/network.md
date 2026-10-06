@@ -63,6 +63,20 @@
 - **링크 상태(Link State)**: 각 라우터가 자기에게 붙은 링크 상태를 전체에 알리고(플러딩), 모두가 같은 지도를 갖고 **다익스트라(Dijkstra)** 알고리즘으로 최단 경로를 계산한다. 변화가 있을 때만 알린다.
 - **경로 벡터(Path Vector)**: 목적지까지 거치는 AS의 목록을 통째로 교환한다. 정책에 따라 경로를 고른다.
 
+```mermaid
+제목: AS 안에서는 IGP(RIP·OSPF), AS와 AS 사이에서는 EGP(BGP)
+flowchart TB
+  subgraph AS1["AS 1"]
+    direction LR
+    R1["라우터"] <-->|"RIP · OSPF"| R2["라우터"]
+  end
+  subgraph AS2["AS 2"]
+    direction LR
+    R3["라우터"] <-->|"RIP · OSPF"| R4["라우터"]
+  end
+  R2 <==>|"BGP"| R3
+```
+
 ### 한눈에 구분
 | 프로토콜 | 분류 | 방식 | 지문에 나오는 단서 |
 |---|---|---|---|

@@ -287,6 +287,18 @@ UML 구성요소는 **사물(Things)**, **관계(Relationships)**, **다이어�
 | **의존(Dependency)** | 한쪽이 바뀌면 다른 쪽이 영향을 받음. 매개변수·지역 변수로 잠깐 사용 | 점선 화살표 | "일시적으로 사용", "영향을 받음" |
 | **실체화(Realization)** | 인터페이스를 클래스가 구현. can-do | 점선 + 빈 삼각형 | "인터페이스 구현", "기능을 실제로 수행" |
 
+```mermaid
+제목: 화살표 모양으로 관계를 구분한다. 속 찬 마름모 = 포함, 빈 마름모 = 집합, 빈 삼각형 실선 = 일반화, 빈 삼각형 점선 = 실체화
+classDiagram
+  direction LR
+  Car *-- Engine : 포함 Composition
+  Team o-- Player : 집합 Aggregation
+  Teacher --> Student : 연관 Association
+  Order ..> Payment : 의존 Dependency
+  Animal <|-- Dog : 일반화 Generalization
+  Flyable <|.. Bird : 실체화 Realization
+```
+
 ### 한눈에 구분
 | 혼동 쌍 | 가르는 기준 |
 |---|---|

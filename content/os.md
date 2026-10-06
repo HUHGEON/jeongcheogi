@@ -160,6 +160,25 @@ Unix 파일 권한은 **소유자(u, user)**, **그룹(g, group)**, **기타(o, 
 - **대기(Waiting, Blocked)**: 입출력 완료 같은 사건을 기다리는 상태. CPU가 비어도 실행 못 함.
 - **종료(Terminated)**: 실행이 끝나 자원을 반납.
 
+```mermaid
+제목: 대기에서 실행으로 바로 가는 화살표는 없다. 사건이 끝나면 준비로 돌아간다
+stateDiagram-v2
+  direction TB
+  state "생성" as New
+  state "준비" as Ready
+  state "실행" as Run
+  state "대기" as Wait
+  state "종료" as Done
+  [*] --> New
+  New --> Ready: 승인
+  Ready --> Run: 디스패치
+  Run --> Ready: 타이머 만료
+  Run --> Wait: 블록 (입출력 요청)
+  Wait --> Ready: 깨움 (입출력 완료)
+  Run --> Done: 종료
+  Done --> [*]
+```
+
 ### 한눈에 구분
 | 전이 | 이름 | 일어나는 때 |
 |---|---|---|
