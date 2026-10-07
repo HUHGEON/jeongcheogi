@@ -250,7 +250,24 @@ class TV implements Device { /* 구현 쪽도 */ }
 class Radio implements Device { /* 따로 늘린다 */ }
 ```
 
-AdvancedRemote 같은 리모컨 종류를 늘려도 TV·Radio는 고치지 않고, 기기 종류를 늘려도 Remote 쪽은 고치지 않는다. Adapter는 이미 만들어진 두 인터페이스를 나중에 맞추는 패턴이고, Bridge는 설계할 때부터 추상부(Remote)와 구현부(Device)를 나눠 두는 패턴이다.
+AdvancedRemote 같은 리모컨 종류를 늘려도 TV·Radio는 고치지 않고, 기기 종류를 늘려도 Remote 쪽은 고치지 않는다. 아래 그림처럼 두 계층은 Remote가 들고 있는 device 필드 하나로만 이어진다.
+
+```mermaid
+제목: 기능 계층과 구현 계층이 따로 자라고, 둘 사이 다리는 device 필드 하나뿐이다
+flowchart LR
+  subgraph F["기능 계층 (추상부)"]
+    direction TB
+    R("Remote") --- AR("AdvancedRemote")
+  end
+  subgraph I["구현 계층 (구현부)"]
+    direction TB
+    D("Device") --- TV("TV")
+    D --- RA("Radio")
+  end
+  F ==>|"device 필드"| I
+```
+
+Adapter는 이미 만들어진 두 인터페이스를 나중에 맞추는 패턴이고, Bridge는 설계할 때부터 추상부(Remote)와 구현부(Device)를 나눠 두는 패턴이다.
 
 #### 3. 컴포지트 (Composite)
 - **부분-전체 트리 구조**, 개별 객체와 복합 객체를 같은 방식으로 다룸
@@ -269,7 +286,18 @@ class Folder implements Node {
 }
 ```
 
-폴더 안에 파일도 폴더도 들어갈 수 있고, 쓰는 쪽은 그게 파일인지 폴더인지 따지지 않고 `size()`만 부른다.
+폴더 안에 파일도 폴더도 들어갈 수 있고, 쓰는 쪽은 그게 파일인지 폴더인지 따지지 않고 `size()`만 부른다. 아래 그림처럼 폴더 아래에 다시 폴더가 달리며 트리가 된다.
+
+```mermaid
+제목: 폴더(복합 객체) 아래에 파일과 폴더가 섞여 달린 부분-전체 트리. 어느 노드든 size()로 똑같이 부른다
+flowchart LR
+  F1("Folder") --> A("File")
+  F1 --> F2("Folder")
+  F2 --> B("File")
+  F2 --> C("File")
+  classDef leaf fill:#f7f8fa,stroke:#c4c9d0,color:#262d40
+  class A,B,C leaf
+```
 
 #### 4. 데코레이터 (Decorator)
 - 객체에 **기능을 동적으로 추가**, 서브클래스를 늘리지 않는 확장
@@ -281,7 +309,17 @@ Coffee c = new Milk(new Syrup(new Espresso()));   // 한 겹 감쌀 때마다 �
 c.cost();   // Espresso 값 + Syrup 값 + Milk 값
 ```
 
-우유 넣은 커피, 시럽 넣은 커피를 클래스로 하나하나 만들지 않고 실행 중에 겹겹이 감싸서 조합한다.
+우유 넣은 커피, 시럽 넣은 커피를 클래스로 하나하나 만들지 않고 실행 중에 겹겹이 감싸서 조합한다. 위 코드의 객체를 그림으로 그리면 아래처럼 상자 안에 상자가 든 모양이다.
+
+```mermaid
+제목: Espresso를 Syrup이, 그것을 다시 Milk가 한 겹씩 감싼다. 겹마다 기능(값)이 하나씩 붙는다
+flowchart LR
+  subgraph M["Milk"]
+    subgraph S["Syrup"]
+      E("Espresso")
+    end
+  end
+```
 
 #### 5. 퍼사드 (Facade)
 - 복잡한 서브시스템 앞의 **단순한 통합 인터페이스 하나**
@@ -457,7 +495,31 @@ class Plane {
 }
 ```
 
-비행기끼리 서로 연락하면 연결선이 다대다로 얽힌다. 관제탑 하나를 거치게 하면 각 비행기(Plane)는 Tower 하나만 참조한다.
+비행기끼리 서로 연락하면 연결선이 다대다로 얽힌다. 관제탑 하나를 거치게 하면 각 비행기(Plane)는 Tower 하나만 참조한다. 아래 그림에서 두 경우의 연결선 수를 비교해 보면 차이가 바로 보인다.
+
+```mermaid
+제목: 중재자가 없으면 비행기끼리 다대다로 얽히고, Tower를 두면 각 비행기는 Tower 하나만 참조한다
+flowchart LR
+  subgraph N["중재자 없음"]
+    direction TB
+    P1("Plane") --- P2("Plane")
+    P1 --- P3("Plane")
+    P1 --- P4("Plane")
+    P2 --- P3
+    P2 --- P4
+    P3 --- P4
+  end
+  subgraph Y["Mediator"]
+    direction TB
+    Q1("Plane") --- T("Tower")
+    Q2("Plane") --- T
+    T --- Q3("Plane")
+    T --- Q4("Plane")
+  end
+  N ~~~ Y
+  classDef hub fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class T hub
+```
 
 #### 6. 메멘토 (Memento)
 - 객체의 **내부 상태를 저장해 두었다가 복원**
@@ -486,7 +548,19 @@ class Channel {
 }
 ```
 
-채널(발행자) 하나에 구독자 여럿이 붙는 일대다 구조다. 행위 패턴 가운데 정답으로 가장 많이 나왔다.
+채널(발행자) 하나에 구독자 여럿이 붙는 일대다 구조다. 아래 그림처럼 upload() 한 번에 update() 알림이 구독자 모두에게 한꺼번에 나간다.
+
+```mermaid
+제목: 발행자 하나에서 구독자 여럿으로 같은 update() 통지가 퍼져 나가는 일대다
+flowchart LR
+  C("Channel<br>upload()") -->|"update()"| S1("Subscriber")
+  C -->|"update()"| S2("Subscriber")
+  C -->|"update()"| S3("Subscriber")
+  classDef hub fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class C hub
+```
+
+행위 패턴 가운데 정답으로 가장 많이 나왔다.
 
 #### 8. 상태 (State)
 - **상태를 객체로 분리**, 상태에 따라 행동이 바뀜
@@ -814,6 +888,22 @@ moduleA.internalCount = 100;
 void a() { f(); }
 void b() { f(); }             // f를 부르는 쪽이 a, b 둘이니 f의 Fan-in은 2
 void f() { x(); y(); z(); }   // f가 부르는 쪽이 x, y, z 셋이니 f의 Fan-out은 3
+```
+
+이 코드를 구조도로 옮기면 아래 그림처럼 된다. 화살표는 부르는 쪽에서 불리는 쪽으로 향한다.
+
+```mermaid
+제목: f로 들어오는 파란 화살표 2개가 Fan-in 2, f에서 나가는 주황 화살표 3개가 Fan-out 3
+flowchart LR
+  a("a") --> f("f")
+  b("b") --> f
+  f --> x("x")
+  f --> y("y")
+  f --> z("z")
+  classDef focus fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class f focus
+  linkStyle 0,1 stroke:#3b82f6,stroke-width:2px
+  linkStyle 2,3,4 stroke:#f59e0b,stroke-width:2px
 ```
 
 같은 모듈 f라도 들어오는 화살표(a, b)를 세면 Fan-in, 나가는 화살표(x, y, z)를 세면 Fan-out이라 값이 다르다. 한글 이름도 거꾸로 외우기 쉬운데, "공유도"는 여러 곳이 함께 쓴다는 뜻이므로 들어오는 쪽(Fan-in), "제어도"는 아래를 거느린다는 뜻이므로 나가는 쪽(Fan-out)으로 기억한다.
@@ -1774,6 +1864,17 @@ Kruchten의 4+1 뷰는 소프트웨어 아키텍처를 다섯 관점으로 나�
 
 > 한 바퀴를 돌 때마다 "이번 단계에서 가장 큰 위험이 무엇인가"부터 따지고, 위험을 줄인 뒤 개발해서 고객 평가를 받는다
 
+아래 그림처럼 네 단계가 한 바퀴를 이루고, 고객 평가가 끝나면 다시 계획 수립으로 돌아가 다음 바퀴를 돈다.
+
+```mermaid
+제목: 네 단계를 한 바퀴로 계속 돌고, 바퀴마다 위험 분석(강조)을 거친다
+flowchart LR
+  P("계획 수립") --> R("위험 분석") --> D("개발·검증") --> E("고객 평가")
+  E -->|"다음 바퀴"| P
+  classDef hub fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class R hub
+```
+
 반복한다는 점은 다른 반복형 모델과 같지만, 매 바퀴 위험 분석을 한다는 점이 나선형만의 단서다.
 
 #### 4. 반복적·점진적 모델 (Iterative/Incremental Model)
@@ -1914,6 +2015,17 @@ V자의 왼쪽 획은 위에서 아래로 요구사항 분석, 기능 명세 분
 
 > 사용자가 "상품 목록" 버튼을 누르면 Controller가 요청을 받아 Model에서 목록을 가져오고, View가 그 목록을 화면에 그린다
 
+위 장면의 흐름을 그리면 아래 그림처럼 사용자의 입력이 Controller로 들어가고, 화면은 View가 맡는다.
+
+```mermaid
+제목: 입력은 Controller, 데이터는 Model, 화면은 View가 따로 맡는다
+flowchart LR
+  U("사용자") -->|"버튼 클릭"| C("Controller")
+  C -->|"목록 가져오기"| M("Model")
+  C -->|"목록 그리기"| V("View")
+  V -->|"화면"| U
+```
+
 화면을 바꿔도 데이터·로직 코드는 그대로 둘 수 있다는 점이 MVC로 나누는 이유다.
 
 #### 4. 파이프-필터 패턴 (Pipe-Filter)
@@ -1938,7 +2050,27 @@ cat access.log | grep ERROR | sort | uniq -c
 
 > 큰 이미지 하나를 마스터가 네 조각으로 나눠 슬레이브 네 대에 맡기고, 처리된 조각을 모아 다시 합친다
 
-브로커는 요청을 이어 주기만 하고, 마스터는 일을 직접 나눠 주고 결과까지 모은다.
+브로커는 요청을 이어 주기만 하고, 마스터는 일을 직접 나눠 주고 결과까지 모은다. 아래 그림에서 두 패턴의 화살표 모양을 비교하면 이 차이가 보인다.
+
+```mermaid
+제목: 브로커는 요청을 한 방향으로 이어 주고, 마스터는 슬레이브 넷에 조각을 나눠 준 뒤 결과를 돌려받는다
+%% 폰: TB
+flowchart LR
+  subgraph BK["브로커"]
+    direction LR
+    CL("클라이언트") --> BR("브로커") --> SV("결제 서버")
+  end
+  subgraph MS["마스터-슬레이브"]
+    direction LR
+    MA("마스터") <-->|"조각 / 결과"| S1("슬레이브")
+    MA <--> S2("슬레이브")
+    MA <--> S3("슬레이브")
+    MA <--> S4("슬레이브")
+  end
+  BK ~~~ MS
+  classDef hub fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class BR,MA hub
+```
 
 ### 품질 속성·프레임워크·영속 계층 객체
 

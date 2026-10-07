@@ -439,6 +439,9 @@ p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
 .idx .key .p{color:var(--accent-ink);font-weight:700}.idx .key .m{color:#0a7d90;font-weight:700}
 @media (max-width:640px){
   .fig{padding:14px 10px 10px;margin:4px -4px 20px}
+  .fig .mmd{justify-content:flex-start;-webkit-overflow-scrolling:touch}
+  .fig .mmd svg[aria-roledescription="sequence"]{max-width:none;width:600px;height:auto;flex:none}
+  .fig:has(svg[aria-roledescription="sequence"]) figcaption::before{content:"옆으로 밀어서 보기 · ";color:var(--accent-ink);font-weight:700}
   .idx .row{gap:2px}.idx .col{width:25px}.idx .col b{height:30px;font-size:14px}.idx .col i{font-size:11px}
   .brow{gap:6px 8px}.brow .bl{width:100%}
   .oct i{width:15px;height:20px;font-size:11px}

@@ -87,7 +87,18 @@ I say bark
 bark
 ```
 
-첫 줄이 "bark"인 건 실제 객체가 Dog이고, Dog가 `sound()`를 **오버라이딩**했기 때문이다. 어느 메서드를 실행할지는 실행 시점에 객체를 보고 정한다. 두 번째 줄이 많이들 틀리는 곳인데, `intro()`는 Animal에 있지만 그 안에서 부르는 `sound()`도 똑같이 객체를 따라가서 Dog의 것이 불린다. 세 번째 줄의 Puppy 클래스에는 `sound()`가 없다. 이럴 때는 Puppy의 부모인 Dog에서 `sound()`를 찾고, Dog에 있으므로 Dog의 "bark"가 나온다.
+첫 줄이 "bark"인 건 실제 객체가 Dog이고, Dog가 `sound()`를 **오버라이딩**했기 때문이다. 어느 메서드를 실행할지는 실행 시점에 객체를 보고 정한다. 두 번째 줄이 많이들 틀리는 곳인데, `intro()`는 Animal에 있지만 그 안에서 부르는 `sound()`도 똑같이 객체를 따라가서 Dog의 것이 불린다. 세 번째 줄의 Puppy 클래스에는 `sound()`가 없다. 이럴 때는 Puppy의 부모인 Dog에서 `sound()`를 찾고, Dog에 있으므로 Dog의 "bark"가 나온다. 아래 그림처럼 찾기는 변수 타입 Animal이 아니라 객체 클래스 Puppy에서 시작해 위로 올라간다.
+
+```mermaid
+제목: p.sound()는 객체 클래스 Puppy부터 위로 찾고, 처음 만나는 Dog의 sound()에서 멈춘다
+%% 폰: TB
+flowchart LR
+  V(["Animal p"]) -->|"가리키는 객체"| P("① Puppy<br/>sound() 없음")
+  P -->|"부모로"| D("② Dog<br/>sound(): bark 실행")
+  D -.->|"여기까지 안 감"| A("Animal<br/>sound(): ...")
+  classDef focus fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class D focus
+```
 
 #### 필드는?
 메서드가 객체를 따라간다면 필드도 그럴까? 아래 코드는 부모와 자식에 이름이 같은 필드 `name`을 하나씩 두었다.
@@ -464,7 +475,29 @@ A()
 B block
 B()
 ```
-`new B(7)`는 B(int)를 부르고, B(int)의 첫 줄 `this()`가 B()를, B()의 `super()`가 A()를, A()의 첫 줄 `this(1)`이 A(int)를 부른다. 이 중 마지막에 불린 A(int)의 "A(1)"이 먼저 출력된다. 그다음 A() 본문, B의 초기화 블록, B() 본문, B(7) 본문 순으로 찍힌다. static 블록은 첫 `new` 직전에 한 번만 나오고, 두 번째 `new B()`에서는 다시 나오지 않는다.
+`new B(7)`는 B(int)를 부르고, B(int)의 첫 줄 `this()`가 B()를, B()의 `super()`가 A()를, A()의 첫 줄 `this(1)`이 A(int)를 부른다. 이 중 마지막에 불린 A(int)의 "A(1)"이 먼저 출력된다. 그다음 A() 본문, B의 초기화 블록, B() 본문, B(7) 본문 순으로 찍힌다. static 블록은 첫 `new` 직전에 한 번만 나오고, 두 번째 `new B()`에서는 다시 나오지 않는다. 첫 `new B(7)`을 아래 그림처럼 그리면 호출은 오른쪽으로 내려가고, 출력은 맨 오른쪽 A(int)부터 왼쪽으로 돌아오며 찍힌다.
+
+```mermaid
+제목: 호출은 B(int) → B() → A() → A(int)로 내려가고, 출력은 A(1)부터 거꾸로 올라온다
+sequenceDiagram
+  participant M as main
+  participant B7 as B(int)
+  participant B0 as B()
+  participant A0 as A()
+  participant A1 as A(int)
+  Note over M: start, B static
+  M->>B7: new B(7)
+  B7->>B0: this()
+  B0->>A0: super()
+  A0->>A1: this(1)
+  Note over A1: ① A(1)
+  A1-->>A0: 복귀
+  Note over A0: ② A()
+  A0-->>B0: 복귀
+  Note over B0: ③ B block<br/>④ B()
+  B0-->>B7: 복귀
+  Note over B7: ⑤ B(7)
+```
 
 ### 자주 틀리는 포인트
 - 호출 순서와 실행(출력) 순서의 구분 (출력은 마지막에 불린 생성자의 본문부터)
@@ -1255,7 +1288,20 @@ public class Main {
 
 재귀 안의 `compute()`도 동적 바인딩이다. obj가 가리키는 객체가 Child라서, 첫 호출뿐 아니라 그 안의 재귀 호출도 모두 Child의 compute()가 실행된다. 그래서 부모 식으로 계산한 3과는 다른 1이 나온다.
 
-20-4를 직접 풀어 보자. `Parent obj = new Child(); obj.compute(4)`에서는 자식의 `compute(n) = compute(n-1) + compute(n-3)`(기저 `n <= 1`이면 n 반환)가 재귀 끝까지 쓰인다. 작은 것부터 쌓아 올리면 c(2) = c(1) + c(-1) = 1 + (-1) = 0, c(3) = c(2) + c(0) = 0 + 0 = 0, c(4) = c(3) + c(1) = 0 + 1 = **1**이다. 여기서 실수하기 쉬운 곳이 c(-1)이다. 기저 조건이 `return num`이라 c(-1)은 0이 아니라 -1인데, 이것을 0으로 놓으면 2라는 오답이 나온다.
+20-4를 직접 풀어 보자. `Parent obj = new Child(); obj.compute(4)`에서는 자식의 `compute(n) = compute(n-1) + compute(n-3)`(기저 `n <= 1`이면 n 반환)가 재귀 끝까지 쓰인다. 작은 것부터 쌓아 올리면 c(2) = c(1) + c(-1) = 1 + (-1) = 0, c(3) = c(2) + c(0) = 0 + 0 = 0, c(4) = c(3) + c(1) = 0 + 1 = **1**이다. 여기서 실수하기 쉬운 곳이 c(-1)이다. 기저 조건이 `return num`이라 c(-1)은 0이 아니라 -1인데, 이것을 0으로 놓으면 2라는 오답이 나온다. 이 계산을 아래 그림처럼 호출 트리로 그리면 c(-1)이 어디서 나오는지 바로 보인다.
+
+```mermaid
+제목: 자식의 compute(n-1) + compute(n-3)로 갈라지고, 기저 조건에 닿은 c(-1)은 -1을 돌려준다
+flowchart LR
+  C4("c(4) = 1") --> C3("c(3) = 0")
+  C4 --> C1a("c(1) = 1")
+  C3 --> C2("c(2) = 0")
+  C3 --> C0("c(0) = 0")
+  C2 --> C1b("c(1) = 1")
+  C2 --> Cm("c(-1) = -1")
+  classDef focus fill:#e9f8fb,stroke:#3bb6c9,stroke-width:2px,color:#262d40
+  class Cm focus
+```
 
 ### 정리
 
@@ -1361,7 +1407,23 @@ null
 3 1 3
 ```
 
-2차원 배열은 "배열을 담은 배열"이다. 처음에는 행 자리에 아직 아무 배열도 없어서 null이고, `m[i] = new int[i+1]`로 행마다 길이 1, 2, 3인 배열을 따로 넣었다. 그래서 행 수는 `m.length`로 3이고, 각 행의 열 수는 `m[i].length`로 따로 재서 `m[0].length`는 1, `m[2].length`는 3이다.
+2차원 배열은 "배열을 담은 배열"이다. 처음에는 행 자리에 아직 아무 배열도 없어서 null이고, `m[i] = new int[i+1]`로 행마다 길이 1, 2, 3인 배열을 따로 넣었다. 그래서 행 수는 `m.length`로 3이고, 각 행의 열 수는 `m[i].length`로 따로 재서 `m[0].length`는 1, `m[2].length`는 3이다. 아래 그림처럼 m이 가리키는 것은 행 칸 3개짜리 배열이고, 각 칸이 길이가 다른 배열을 따로 가리킨다.
+
+```mermaid
+제목: m.length는 행 칸의 수 3, m[i].length는 그 칸이 가리키는 배열의 길이
+%% 폰: TB / LR
+flowchart LR
+  M(["m"]) --> R
+  subgraph R["행 칸 3개 (처음엔 모두 null)"]
+    direction TB
+    r0("m[0]")
+    r1("m[1]")
+    r2("m[2]")
+  end
+  r0 --> A0("[0]")
+  r1 --> A1("[0, 0]")
+  r2 --> A2("[0, 0, 0]")
+```
 
 #### 배열을 반환하거나 넘기면 같은 배열
 메서드가 배열을 돌려주거나 배열을 매개변수로 받으면 복사본이 생길까? 바꿔 보면 안다.
@@ -1689,6 +1751,22 @@ try-catch-finally는 상황마다 흐름이 정해져 있다. 먼저 표로 정�
 | try에서 예외, 맞는 catch 없음 | finally 실행 후 호출한 쪽으로 예외가 올라간다 |
 | try나 catch에 return | return 값을 정한 뒤 finally를 실행하고 반환한다 |
 | 여러 catch | 위에서부터 처음 맞는 하나만. 부모 예외 타입(Exception)을 위에 두면 아래는 컴파일 오류 |
+
+표의 위 세 줄을 흐름으로 이으면 아래 그림처럼 어느 길로 가든 finally를 지난다.
+
+```mermaid
+제목: 세 길 모두 finally를 지나고, 맞는 catch가 없던 예외만 finally 뒤에 호출한 쪽으로 올라간다
+%% 폰: TB
+flowchart LR
+  T("try 실행") --> Q{"예외?"}
+  Q -->|"없음"| E("try 끝까지")
+  Q -->|"있음: 나머지 건너뜀"| C("맞는 catch")
+  Q -->|"맞는 catch 없음"| F("finally")
+  E --> F
+  C --> F
+  F -->|"예외 없음·처리됨"| N("다음 문장")
+  F -->|"안 잡힌 예외"| U("호출한 쪽으로")
+```
 
 #### 예외가 나면 try의 나머지는 건너뛴다
 try 안에서 예외가 나면 그 아래 문장도 실행될까?
@@ -2152,7 +2230,24 @@ public class Main {
 50
 ```
 
-`b = new Box(7)` 전에 바꾼 50은 반영됐고, 그 뒤의 999는 반영되지 않았다. `b = new Box(7)`은 지역 변수 `b`가 가리키는 대상을 새 객체로 바꿀 뿐이고, main의 `box`는 여전히 원래 객체를 가리킨다. 그 뒤의 변경은 새 객체에만 일어난다.
+`b = new Box(7)` 전에 바꾼 50은 반영됐고, 그 뒤의 999는 반영되지 않았다. `b = new Box(7)`은 지역 변수 `b`가 가리키는 대상을 새 객체로 바꿀 뿐이고, main의 `box`는 여전히 원래 객체를 가리킨다. 그 뒤의 변경은 새 객체에만 일어난다. 아래 그림처럼 화살표가 바뀌는 것은 `b` 하나뿐이다.
+
+```mermaid
+제목: b는 처음에 box와 같은 객체를 가리키다가 new 뒤에는 새 객체를 가리키므로 999는 box에 안 보인다
+%% 폰: TB
+flowchart LR
+  subgraph M["main"]
+    box(["box"])
+  end
+  subgraph R["replace(Box b)"]
+    b(["b"])
+  end
+  O1("원래 Box<br/>v: 1 → 50")
+  O2("새 Box<br/>v: 7 → 999")
+  box --> O1
+  b -.->|"new 전: 같은 참조 복사"| O1
+  b -->|"new 후"| O2
+```
 
 #### String은 불변, String 배열의 원소는 바뀐다
 String도 객체인데 필드처럼 바뀔까? String 하나와 String 배열을 같이 넘겨서 비교한다.
@@ -2603,7 +2698,21 @@ public class Main {
 
 ### 정리
 
-그림으로 생각하면 쉽다. 한 객체 안에 P의 v와 C의 v, 이렇게 v가 두 개 따로 들어 있다고 그리면 된다. P 타입 변수로 읽거나 P에 적힌 메서드 안에서 읽으면 P의 v이고, C 타입 변수로 읽거나 C에 적힌 메서드 안에서 읽으면 C의 v다.
+그림으로 생각하면 쉽다. 한 객체 안에 P의 v와 C의 v, 이렇게 v가 두 개 따로 들어 있다고 그리면 된다. P 타입 변수로 읽거나 P에 적힌 메서드 안에서 읽으면 P의 v이고, C 타입 변수로 읽거나 C에 적힌 메서드 안에서 읽으면 C의 v다. 아래 그림이 예제의 객체 하나를 그린 것이다.
+
+```mermaid
+제목: 객체 하나에 v가 두 개 있고, P 쪽에서 읽으면 P의 v, C 쪽에서 읽으면 C의 v에 닿는다
+flowchart LR
+  pv(["p.v"]) --> PV
+  pg(["P에 적힌 메서드의 v"]) --> PV
+  cv(["c.v"]) --> CV
+  cg(["C에 적힌 메서드의 v"]) --> CV
+  subgraph OBJ["new C()로 만든 객체 하나"]
+    direction TB
+    PV("P의 v = 10")
+    CV("C의 v = 20")
+  end
+```
 
 ### 예제
 ```java
