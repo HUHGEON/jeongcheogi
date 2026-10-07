@@ -330,6 +330,12 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
   .prose table{font-size:14px;min-width:0}
   .prose th,.prose td{padding:8px 10px}
   .tbl.keep table{min-width:0;width:100%}
+  .tbl.keep td.nw{white-space:nowrap}
+  .tbl.wide table{width:max-content;min-width:100%}
+  .tbl.wide td{max-width:220px}
+  .tbl.wide th:first-child,.tbl.wide td:first-child{position:sticky;left:0;z-index:1;box-shadow:1px 0 0 var(--line-2);white-space:normal;max-width:34vw}
+  .tbl.wide th:first-child{background:var(--bg-2)}
+  .tbl.wide td:first-child{background:var(--bg)}
   .tbl.stack{overflow:visible;border:0;border-radius:0}
   .tbl.stack table,.tbl.stack tbody,.tbl.stack tr,.tbl.stack td{display:block;width:100%}
   .tbl.stack thead{display:none}
@@ -571,9 +577,13 @@ function enhanceBody(body){
     const heads=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
     const cells=[...t.querySelectorAll('tbody td')];
     cells.forEach(td=>{const i=[...td.parentNode.children].indexOf(td);td.dataset.label=heads[i]||'';if(!td.textContent.trim())td.classList.add('e')});
-    const maxLen=Math.max(0,...cells.map(td=>td.textContent.trim().length));
-    // 칸이 짧은 표(숫자표, 대응표)는 표 그대로, 그 외는 폰에서 카드로 쌓는다
-    if(heads.length>6 || (maxLen<=14 && heads.length<=6)) w.classList.add('keep'); else w.classList.add('stack');
+    // 칸이 짧은 비교·숫자표는 폰에서도 표 그대로(넘치면 옆으로 밀기), 글이 긴 표만 카드로 쌓는다
+    // 기준: 첫 열을 뺀 칸 길이의 75번째 값이 16자 이하면 비교표
+    const rest=cells.filter(td=>td.cellIndex>0).map(td=>td.textContent.trim().length).sort((a,b)=>a-b);
+    const p75=rest.length?rest[Math.floor((rest.length-1)*0.75)]:0;
+    w.dataset.p75=p75;
+    if(heads.length>6 || p75<=16){w.classList.add('keep');cells.forEach(td=>{if(td.textContent.trim().length<=14)td.classList.add('nw')})}
+    else w.classList.add('stack');
     if(heads.length===2) w.classList.add('two');
     // 첫 칸이 순위 숫자뿐이면 폰에서는 "1. 이름" 으로 합쳐 제목으로 쓴다
     const rows=[...t.querySelectorAll('tbody tr')];
@@ -781,7 +791,10 @@ async function showSet(id,n){
   const body=main.querySelector('#body');const sec=pg.bodyEl.children[n-1].cloneNode(true);sec.classList.add('single');sec.querySelector('.set-h h2').remove();sec.querySelector('.set-h .no').remove();sec.querySelector('.chk').insertAdjacentHTML('beforeend','<span>다 봤음</span>');body.appendChild(sec);
   const phone=matchMedia('(max-width:640px)').matches;
   body.querySelectorAll('.code').forEach(c=>{const el=c.querySelector('pre code');try{hljs.highlightElement(el)}catch(e){}lineify(el);if(phone){c.classList.add('wrap');c.querySelector('.wr').textContent='가로 보기'}});
-  if(phone) body.querySelectorAll('.tbl.keep').forEach(w=>{if(w.scrollWidth>w.clientWidth+2){if(w.querySelectorAll('thead th').length<=6){w.classList.remove('keep');w.classList.add('stack')}else w.insertAdjacentHTML('beforebegin','<p class="swipe">표가 넓어요. 옆으로 밀어서 보세요 →</p>')}});
+  if(phone) body.querySelectorAll('.tbl.keep').forEach(w=>{if(w.scrollWidth>w.clientWidth+2){
+    // 넘치는 표: 칸이 아주 짧은 격자(○/✕, 숫자, 참조열)만 옆으로 밀어 보고, 설명이 섞인 표는 카드로
+    if(+w.dataset.p75>10 && w.querySelectorAll('thead th').length<=6){w.classList.remove('keep');w.classList.add('stack');return}
+    w.classList.add('wide');w.insertAdjacentHTML('beforebegin','<p class="swipe">옆으로 밀어서 보기 →</p>')}});
   drawFigures(body);
   applyDone(sec);
   body.addEventListener('click',e=>{
