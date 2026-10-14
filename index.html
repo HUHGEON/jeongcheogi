@@ -162,6 +162,7 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .prose td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
 .prose tr:last-child td{border-bottom:0}
 .prose td:first-child{color:var(--ink)}
+.prose td.ox,.prose th.ox{text-align:center}
 
 /* 코드 블록: macOS 창 */
 .code{margin:0 0 6px;border-radius:7px;overflow:hidden;background:var(--code-bg);box-shadow:0 8px 24px -12px rgba(15,20,35,.35)}
@@ -435,6 +436,16 @@ p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
 .bkey b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .bkey b.n{background:var(--accent-soft);border:1px solid var(--accent-line)}.bkey b.h{background:var(--info-soft);border:1px solid #a6e6f1}
 .bkey .bn{color:var(--muted)}
+.venn{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 10px}
+.venn .vi{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.venn svg{width:100%;max-width:150px;height:auto}
+.venn .on{opacity:.32}.venn .on>*{fill:var(--accent);stroke:none}
+.venn .ln circle{fill:none;stroke:var(--ink);stroke-width:1.4}
+.venn text{font-size:11px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.venn b{font-family:var(--mono);font-size:13.5px;color:var(--ink)}
+.venn em{font-style:normal;font-size:13px;font-weight:800;color:var(--accent-ink)}
+.venn span{font-size:12.5px;line-height:1.45;color:var(--text)}
+@media (max-width:640px){.venn{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .idx{display:flex;flex-direction:column;align-items:center;gap:12px}
 .idx .row{display:flex;gap:4px;max-width:100%;overflow-x:auto;padding-bottom:2px}
 .idx .col{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;width:30px}
@@ -576,7 +587,10 @@ function enhanceBody(body){
     const w=document.createElement('div');w.className='tbl';t.before(w);w.appendChild(t);
     const heads=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
     const cells=[...t.querySelectorAll('tbody td')];
-    cells.forEach(td=>{const i=[...td.parentNode.children].indexOf(td);td.dataset.label=heads[i]||'';if(!td.textContent.trim())td.classList.add('e')});
+    cells.forEach(td=>{const i=[...td.parentNode.children].indexOf(td);td.dataset.label=heads[i]||'';if(!td.textContent.trim())td.classList.add('e');if(/^[○✕]$/.test(td.textContent.trim()))td.classList.add('ox')});
+    // ○/✕가 든 열은 머리와 칸 전체를 가운데로
+    const trs=[...t.querySelectorAll('tbody tr')];
+    t.querySelectorAll('thead th').forEach((th,i)=>{if(i>0&&trs.some(r=>r.children[i]&&r.children[i].classList.contains('ox'))){th.classList.add('ox');trs.forEach(r=>r.children[i]&&r.children[i].classList.add('ox'))}});
     // 칸이 짧은 비교·숫자표는 폰에서도 표 그대로(넘치면 옆으로 밀기), 글이 긴 표만 카드로 쌓는다
     // 기준: 첫 열을 뺀 칸 길이의 75번째 값이 16자 이하면 비교표
     const rest=cells.filter(td=>td.cellIndex>0).map(td=>td.textContent.trim().length).sort((a,b)=>a-b);
@@ -595,12 +609,12 @@ function enhanceBody(body){
   body.querySelectorAll('code').forEach(c=>{if(!c.closest('pre')&&c.textContent.length<=22)c.classList.add('nw')});
   // 그림 블록
   [...body.querySelectorAll('pre > code')].forEach(code=>{
-    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel|idx)/); if(!m) return;
+    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel|idx|venn)/); if(!m) return;
     let src=code.textContent.replace(/\s+$/,''),cap='';
     const c=src.match(/^(?:%%\s*)?제목\s*[:：]\s*(.+)\n/); if(c){cap=c[1];src=src.slice(c[0].length)}
     const fig=document.createElement('figure');fig.className='fig fig-'+m[1];
     if(m[1]==='mermaid'){const d=document.createElement('div');d.className='mmd';d.textContent=src;fig.appendChild(d)}
-    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel,idx:renderIdx})[m[1]](src);
+    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel,idx:renderIdx,venn:renderVenn})[m[1]](src);
     if(cap) fig.insertAdjacentHTML('beforeend',`<figcaption>${esc(cap)}</figcaption>`);
     code.parentNode.replaceWith(fig);
   });
@@ -666,6 +680,20 @@ function renderVModel(src){
   return `<div class="vm" style="--n:${n}"><div class="vm-h"><span>개발 (위에서 아래로)</span><span>테스트 (아래에서 위로)</span></div>${it.map((x,i)=>`<div class="vm-r" style="--i:${i}"><span class="vm-l">${esc(x[0])}</span><i class="vm-k${i===n-1?' last':''}"></i><span class="vm-t">${esc(x[1])}</span></div>`).join('')}</div>`;
 }
 /* 인덱스 그림: 첫 줄의 문자열 글자마다 앞 번호(0부터)와 뒤 번호(-1부터)를 붙인다 */
+/* 조인 벤 그림: 첫 줄 "표: 왼쪽 | 오른쪽", 다음 줄마다 "이름 | inner|left|right|full | 행 수 | 설명" */
+const VENN={ax:46,bx:84,cy:40,r:30};
+function renderVenn(src){
+  const ls=src.split('\n').map(l=>l.trim()).filter(Boolean);let L='A',R='B';
+  if(/^표\s*[:：]/.test(ls[0])){[L,R]=ls.shift().replace(/^표\s*[:：]/,'').split('|').map(x=>x.trim())}
+  const {ax,bx,cy,r}=VENN,a=`<circle cx="${ax}" cy="${cy}" r="${r}"/>`,b=`<circle cx="${bx}" cy="${cy}" r="${r}"/>`;
+  // 겹친 영역: 두 원의 교점을 잇는 호 두 개
+  const mx=(ax+bx)/2,dy=Math.sqrt(r*r-((bx-ax)/2)**2),y1=(cy-dy).toFixed(2),y2=(cy+dy).toFixed(2);
+  const lens=`<path d="M${mx} ${y1}A${r} ${r} 0 0 1 ${mx} ${y2}A${r} ${r} 0 0 1 ${mx} ${y1}Z"/>`;
+  const shade={inner:lens,left:a,right:b,full:a+b};
+  const items=ls.map(l=>{const [name,kind,cnt,desc]=l.split('|').map(x=>(x||'').trim());
+    return `<div class="vi"><svg viewBox="0 0 130 80" aria-hidden="true"><g class="on">${shade[kind]||''}</g><g class="ln">${a}${b}</g><text x="30" y="44">${esc(L)}</text><text x="100" y="44">${esc(R)}</text></svg><b>${esc(name)}</b>${cnt?`<em>${esc(cnt)}</em>`:''}${desc?`<span>${esc(desc)}</span>`:''}</div>`}).join('');
+  return `<div class="venn">${items}</div>`;
+}
 function renderIdx(src){
   const t=[...src.split('\n')[0].trim()],n=t.length;
   const cols=t.map((ch,i)=>`<span class="col"><i class="p">${i}</i><b>${esc(ch)}</b><i class="m">${i-n}</i></span>`).join('');
