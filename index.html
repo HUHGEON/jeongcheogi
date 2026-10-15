@@ -151,6 +151,8 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .prose li{margin:6px 0}
 .prose li::marker{color:var(--accent)}
 .prose strong{color:var(--ink);font-weight:800}
+/* 기출에 나온 개념 표시 */
+.xb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent-ink);font-family:var(--mono);font-size:11.5px;font-weight:700;line-height:1.7;vertical-align:.12em;white-space:nowrap;letter-spacing:0}
 .prose a{color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px}
 .prose :not(pre) > code{background:var(--inline-bg);border:1px solid var(--inline-line);border-radius:4px;padding:1px 6px;font-size:.84em;color:var(--ink)}
 .prose blockquote{margin:0 0 18px;padding:12px 18px;border-left:4px solid var(--accent);background:var(--bg-2);border-radius:0 6px 6px 0}
@@ -680,6 +682,42 @@ function enhanceBody(body){
     const ab=box.querySelector('.ab');let n=h.nextSibling;
     while(n && !(n.nodeType===1 && /^H[23]$/.test(n.tagName))){const nx=n.nextSibling;ab.appendChild(n);n=nx}
     h.replaceWith(box);
+  });
+  markExam(body);
+}
+
+/* 기출 표시: 「기출에서 이렇게 나왔다」의 "회차: … → **답**"에서 답과 회차를 읽어,
+   위 개념 설명에서 그 용어가 처음 나오는 자리(#### 제목 > 표 첫 열 > 목록 첫 굵은 글자 > 굵은 글자)에 회차를 붙인다 */
+function markExam(body){
+  const ex=body.querySelector('.adm.exam .ab'); if(!ex) return;
+  const norm=s=>s.replace(/\s+/g,'').toLowerCase();
+  const hits=new Map();
+  ex.querySelectorAll('li').forEach(li=>{
+    const r=li.textContent.trim().match(/^(\d{2}-\d)/); if(!r) return;
+    li.querySelectorAll('strong').forEach(s=>s.textContent.split(/[\/,]/).forEach(t=>{
+      t=norm(t); if(t.length<2 || !/[a-z가-힣]/.test(t) || /^[a-z]{0,2}\d+[a-z]?$/.test(t)) return;
+      if(!hits.has(t)) hits.set(t,new Set()); hits.get(t).add(r[1]);
+    }));
+  });
+  if(!hits.size) return;
+  const outside=el=>!el.closest('.adm,.out,.code,.fig,.meta-line');
+  const cands=[
+    ...body.querySelectorAll('h4'),
+    ...[...body.querySelectorAll('tbody td:first-child')],
+    ...[...body.querySelectorAll('li > strong:first-child')],
+    ...body.querySelectorAll('strong')
+  ].filter(outside);
+  // 제목 앞 번호("1. ")는 떼고 비교. 전체·괄호 앞 이름·괄호 안 말 중 하나라도 같으면 같은 개념으로 본다
+  const names=x=>{const m=x.match(/^([^(]*)(?:\(([^)]+)\))?/);return [x,m[1],m[2]].filter(Boolean)};
+  const same=(c,t)=>{const a=names(norm(c).replace(/^\d+\./,'')),b=names(t);return a.some(x=>b.includes(x))};
+  const at=new Map();
+  hits.forEach((set,t)=>{
+    const el=cands.find(c=>same(c.textContent,t)); if(!el) return;
+    if(!at.has(el)) at.set(el,new Set()); set.forEach(r=>at.get(el).add(r));
+  });
+  at.forEach((set,el)=>{
+    const b=document.createElement('span');b.className='xb';b.textContent='기출 '+[...set].sort().reverse().join('·');
+    if(el.tagName==='STRONG') el.after(b); else el.appendChild(b);
   });
 }
 
