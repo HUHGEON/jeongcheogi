@@ -411,6 +411,28 @@ p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
 }
 .fig{margin:6px 0 24px;padding:18px 16px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .fig figcaption{margin-top:12px;text-align:center;font-size:13.5px;color:var(--muted)}
+/* 페이지 교체 표 */
+.pg-t{text-align:center;font-weight:800;font-size:16px;color:var(--ink);margin-bottom:10px}
+.pg-s{overflow-x:auto}
+.prose table.pg{border-collapse:separate;border-spacing:3px;width:auto;min-width:0;margin:0 auto;font-family:var(--mono);font-size:15px;line-height:1}
+.prose .pg th,.prose .pg td{width:34px;min-width:34px;height:34px;padding:0;border:0;text-align:center;vertical-align:middle;white-space:nowrap}
+.prose .pg thead th{background:var(--hero);color:#fff;border-radius:4px;font-weight:800}
+.prose .pg tbody td{border:1px solid var(--line-2);border-radius:4px;background:var(--bg);color:var(--ink);font-weight:700}
+.prose .pg th:first-child{position:sticky;left:0;z-index:1;width:auto;min-width:0;padding-right:8px;background:var(--bg);color:var(--muted);font-family:var(--body);font-size:13px;font-weight:800;text-align:left}
+.prose .pg thead th:first-child{color:var(--ink)}
+.pg td i{font-style:normal;color:var(--faint);font-weight:400}
+.pg sub{font-size:10px;color:var(--muted);margin-left:1px;vertical-align:-2px}
+.prose .pg td.new{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-ink)}
+.prose .pg td.hit{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.prose .pg .pg-o td,.prose .pg .pg-r td{border:0;background:none;box-shadow:none}
+.prose .pg .pg-o td{height:20px;font-size:13px;color:var(--muted);font-weight:400}
+.prose .pg .pg-r td{font-size:16px;font-weight:800}
+.pg .pg-r td.f{color:var(--accent-ink)}.pg .pg-r td.o{color:var(--ok)}
+.pg-sum{margin-top:12px;text-align:center;font-weight:800;font-size:16px;color:var(--accent-ink)}
+.pg-k{margin-top:4px;text-align:center;font-size:12.5px;line-height:1.7;color:var(--muted)}
+.pg-k .new{padding:0 4px;border-radius:3px;background:var(--accent-soft);color:var(--accent-ink)}
+.pg-k .hit{padding:0 4px;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--ok)}
+@media (max-width:640px){.prose .pg th,.prose .pg td{width:28px;min-width:28px;height:28px;font-size:13px}.prose table.pg{border-spacing:2px}.pg-s{margin:0 -6px}}
 .fig .mmd{display:flex;justify-content:center;overflow-x:auto;min-height:40px;color:transparent}
 .fig .mmd svg{max-width:100%;height:auto}
 .fig .mmd[data-processed]{color:inherit}
@@ -638,12 +660,12 @@ function enhanceBody(body){
   body.querySelectorAll('code').forEach(c=>{if(!c.closest('pre')&&c.textContent.length<=22)c.classList.add('nw')});
   // 그림 블록
   [...body.querySelectorAll('pre > code')].forEach(code=>{
-    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel|idx|venn)/); if(!m) return;
+    const m=code.className.match(/language-(mermaid|gantt|bits|steps|vmodel|idx|venn|paging)/); if(!m) return;
     let src=code.textContent.replace(/\s+$/,''),cap='';
     const c=src.match(/^(?:%%\s*)?제목\s*[:：]\s*(.+)\n/); if(c){cap=c[1];src=src.slice(c[0].length)}
     const fig=document.createElement('figure');fig.className='fig fig-'+m[1];
     if(m[1]==='mermaid'){const d=document.createElement('div');d.className='mmd';d.textContent=src;fig.appendChild(d)}
-    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel,idx:renderIdx,venn:renderVenn})[m[1]](src);
+    else fig.innerHTML=({gantt:renderGantt,bits:renderBits,steps:renderSteps,vmodel:renderVModel,idx:renderIdx,venn:renderVenn,paging:renderPaging})[m[1]](src);
     if(cap) fig.insertAdjacentHTML('beforeend',`<figcaption>${esc(cap)}</figcaption>`);
     code.parentNode.replaceWith(fig);
   });
@@ -752,6 +774,45 @@ function renderGantt(src){
   <div class="glegend">${ps.map(p=>`<span><b style="background:${col(p)}"></b>${p}</span>`).join('')}</div></div>`;
 }
 /* 단계 그림: 각 줄 "제목 | 설명" (화면 폭에 맞춰 줄바꿈) */
+/* 페이지 교체 표: "알고리즘: LRU" "프레임: 3" "참조: 1 2 3 …" (LFU·MFU는 "동률: FIFO|LRU")
+   손으로 채우지 않고 pageSim으로 계산한다. 프레임 칸은 위에서부터 다음에 나갈 순서(맨 위가 희생자) */
+function pageSim(alg,n,refs,tie){
+  const fr=[],steps=[];
+  const nextUse=(p,i)=>{const j=refs.indexOf(p,i+1);return j<0?Infinity:j};
+  const order=i=>{const k={
+    FIFO:(a,b)=>a.in-b.in,
+    LRU:(a,b)=>a.last-b.last,
+    LFU:(a,b)=>a.cnt-b.cnt||(tie==='LRU'?a.last-b.last:a.in-b.in),
+    MFU:(a,b)=>b.cnt-a.cnt||(tie==='LRU'?a.last-b.last:a.in-b.in),
+    OPT:(a,b)=>(nextUse(b.p,i)-nextUse(a.p,i))||a.in-b.in}[alg];
+    return [...fr].sort((a,b)=>{const d=k(a,b);return Number.isNaN(d)?0:d})};
+  refs.forEach((p,i)=>{
+    let f=fr.find(x=>x.p===p),out=null,hit=!!f;
+    if(f){f.last=i;f.cnt++}
+    else{
+      if(fr.length>=n){const v=order(i)[0];out=v.p;fr.splice(fr.indexOf(v),1)}
+      fr.push({p,in:i,last:i,cnt:1});
+    }
+    steps.push({p,hit,out,frames:order(i).map(x=>({p:x.p,cnt:x.cnt,cur:x.p===p}))});
+  });
+  return steps;
+}
+const PG_RULE={FIFO:'먼저 들어온 순',LRU:'오래 안 쓴 순',LFU:'참조 횟수 적은 순',MFU:'참조 횟수 많은 순',OPT:'다음에 쓰일 때가 먼 순'};
+function renderPaging(src){
+  const kv={};src.split('\n').forEach(l=>{const m=l.match(/^\s*(\S+)\s*[:：]\s*(.+)$/);if(m)kv[m[1]]=m[2].trim()});
+  const alg=(kv['알고리즘']||'FIFO').toUpperCase(),n=+kv['프레임']||3,tie=(kv['동률']||'FIFO').toUpperCase();
+  const refs=(kv['참조']||'').split(/[\s,]+/).filter(Boolean);
+  const st=pageSim(alg,n,refs,tie),miss=st.filter(x=>!x.hit).length,cnt=/FU$/.test(alg);
+  const cell=f=>f?`${esc(f.p)}${cnt?`<sub>${f.cnt}</sub>`:''}`:'';
+  const rows=Array.from({length:n},(_,r)=>`<tr><th>프레임${r+1}</th>${st.map(x=>{const f=x.frames[r];return `<td class="${f&&f.cur?(x.hit?'hit':'new'):''}">${f?cell(f):'<i>-</i>'}</td>`}).join('')}</tr>`).join('');
+  const outs=st.some(x=>x.out!==null)?`<tr class="pg-o"><th>나감</th>${st.map(x=>`<td>${x.out===null?'':esc(x.out)}</td>`).join('')}</tr>`:'';
+  const res=`<tr class="pg-r"><th>결과</th>${st.map(x=>x.hit?'<td class="o">○</td>':'<td class="f">F</td>').join('')}</tr>`;
+  const rate=Math.round(miss/st.length*1000)/10;
+  const rule=PG_RULE[alg]+(cnt?`, 같으면 ${tie==='LRU'?'오래 안 쓴':'먼저 들어온'} 순`:'');
+  return `<div class="pg-t">${esc(alg)} · 프레임 ${n}개</div><div class="pg-s"><table class="pg"><thead><tr><th>참조</th>${refs.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}${outs}${res}</tbody></table></div>
+<div class="pg-sum">부재 ${miss}번 · 적중 ${st.length-miss}번 · 부재율 ${rate}%</div>
+<div class="pg-k">칸은 위에서부터 ${rule}, 맨 위가 다음에 나갈 페이지 · <span class="new">색칠</span> 새로 들어옴 · <span class="hit">테두리</span> 적중${cnt?' · 작은 숫자는 참조 횟수':''}</div>`;
+}
 function renderSteps(src){
   const it=src.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]);
   return `<ol class="steps">${it.map((x,i)=>`<li${i===0?' class="st0"':''}><b>${esc(x[0])}</b>${x[1]?`<span>${esc(x[1])}</span>`:''}</li>`).join('')}</ol>`;
@@ -911,6 +972,7 @@ async function showSet(id,n){
     const cs=[...row.children],cnt={};cs.forEach(c=>cnt[c.offsetTop]=(cnt[c.offsetTop]||0)+1);
     cs.forEach(c=>{if(cnt[c.offsetTop]>1)c.classList.add('grow');else if(c.offsetWidth>row.clientWidth/2)c.classList.add('solo')});
   });
+  body.querySelectorAll('.pg-s').forEach(w=>{if(w.scrollWidth>w.clientWidth+2)w.insertAdjacentHTML('beforebegin','<p class="swipe">옆으로 밀어서 보기 →</p>')});
   drawFigures(body);
   applyDone(sec);
   body.addEventListener('click',e=>{
