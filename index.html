@@ -691,12 +691,14 @@ function enhanceBody(body){
 function markExam(body){
   const ex=body.querySelector('.adm.exam .ab'); if(!ex) return;
   const norm=s=>s.replace(/\s+/g,'').toLowerCase();
+  // 줄 앞 회차: "26-2:" 또는 "23-1, 20-3:"
+  const rounds=li=>{const m=li.textContent.trim().match(/^((?:\d{2}-\d)(?:\s*,\s*\d{2}-\d)*)\s*:/);return m&&m[1].split(/\s*,\s*/)};
   const hits=new Map();
   ex.querySelectorAll('li').forEach(li=>{
-    const r=li.textContent.trim().match(/^(\d{2}-\d)/); if(!r) return;
-    li.querySelectorAll('strong').forEach(s=>s.textContent.split(/[\/,]/).forEach(t=>{
+    const rs=rounds(li); if(!rs) return;
+    li.querySelectorAll('strong').forEach(s=>s.textContent.split(/[\/,→]/).forEach(t=>{
       t=norm(t); if(t.length<2 || !/[a-z가-힣]/.test(t) || /^[a-z]{0,2}\d+[a-z]?$/.test(t)) return;
-      if(!hits.has(t)) hits.set(t,new Set()); hits.get(t).add(r[1]);
+      if(!hits.has(t)) hits.set(t,new Set()); rs.forEach(r=>hits.get(t).add(r));
     }));
   });
   if(!hits.size) return;
@@ -714,6 +716,22 @@ function markExam(body){
   hits.forEach((set,t)=>{
     const el=cands.find(c=>same(c.textContent,t)); if(!el) return;
     if(!at.has(el)) at.set(el,new Set()); set.forEach(r=>at.get(el).add(r));
+  });
+  // 답이 숫자인 계산 문제("→ SRT 평균 대기시간 6.5")도 잡도록, 화살표 뒤에 이름이 그대로 나오면 그 회차도 붙인다(화살표 앞 단서는 보지 않는다)
+  const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const named=cands.map(c=>{const raw=c.textContent.replace(/^\s*\d+\.\s*/,'').trim();const m=raw.match(/^([^(]*)(?:\(([^)]+)\))?/);
+    return [c,[m[1],m[2]].map(x=>x&&x.trim()).filter(x=>x&&x.length>=2&&/[A-Za-z가-힣]/.test(x)).map(x=>new RegExp('(?<![A-Za-z0-9가-힣])'+esc(x)+'(?![A-Za-z0-9])'))]});
+  ex.querySelectorAll('li').forEach(li=>{
+    const rs=rounds(li); if(!rs) return;
+    // 화살표 뒤 첫 문장만, 굵은 답(위에서 처리)과 괄호 속 풀이는 빼고 본다. 보기 나열·오답 풀이에 걸리지 않게
+    const c2=li.cloneNode(true);c2.querySelectorAll('strong').forEach(x=>x.replaceWith(' '));
+    const t=c2.textContent.trim(),i=t.indexOf('→'); if(i<0) return;
+    let after=t.slice(i+1);while(/\([^()]*\)/.test(after))after=after.replace(/\([^()]*\)/g,' ');  // 겹친 괄호는 안쪽부터
+    after=after.split(/\.\s/)[0];const seen=new Set();
+    named.forEach(([c,res])=>{
+      const k=res.find(re=>re.test(after)); if(!k||seen.has(k.source)) return;  // 같은 이름은 처음 나오는 자리 하나에만
+      seen.add(k.source); if(!at.has(c))at.set(c,new Set()); rs.forEach(r=>at.get(c).add(r));
+    });
   });
   at.forEach((set,el)=>{
     const b=document.createElement('span');b.className='xb';b.textContent='기출 '+[...set].sort().reverse().join('·');
