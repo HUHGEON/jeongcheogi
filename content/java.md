@@ -1695,7 +1695,12 @@ public class Main {
 
 ### 정리
 
-자주 나오는 String 메서드는 `length()`, `charAt(i)`, `substring(a, b)`(b 미포함), `indexOf("c")`(없으면 -1), `split(",")`, `toUpperCase()`, `equals`, `isEmpty()`, `trim()`, `contains` 정도다. 이 중에서 `split`은 따로 기억할 규칙이 많다. 연속된 구분자 사이에는 빈 문자열이 생기고, 끝의 빈 문자열은 버린다. 그런데 맨 앞의 빈 문자열은 남는다. 예를 들어 `",a".split(",")`는 2개다. 또 인자가 정규식이라서 `split(".")`는 길이 0이 된다. 점으로 나누고 싶다면 `split("\\.")`를 써야 한다.
+자주 나오는 String 메서드는 `length()`, `charAt(i)`, `substring(a, b)`(b 미포함), `indexOf("c")`(없으면 -1), `split(",")`, `toUpperCase()`, `equals`, `isEmpty()`, `trim()`, `contains` 정도다. 이 중에서 `split`은 따로 기억할 규칙이 많다.
+
+- 연속된 구분자 사이: 빈 문자열이 생김
+- 끝의 빈 문자열: 버림
+- 맨 앞의 빈 문자열: 남음. `",a".split(",")`는 2개
+- 인자는 정규식: `split(".")`는 길이 0. 점으로 나누려면 `split("\\.")`
 
 ### 예제
 ```java
@@ -1944,7 +1949,14 @@ catch가 1을 반환값으로 정해 두었지만 finally의 `return 2`가 그 �
 
 ### 정리
 
-자주 나오는 예외는 `ArithmeticException`(0으로 나눔), `ArrayIndexOutOfBoundsException`, `NullPointerException`, `NumberFormatException`(`Integer.parseInt("a")`)이다. 이들은 모두 `RuntimeException`의 자식이라서 `catch (RuntimeException e)`로도, `catch (Exception e)`로도 잡힌다. 예외는 `throw new X("msg")`로 직접 던질 수 있고, 넣은 메시지는 `e.getMessage()`로 꺼낸다.
+자주 나오는 예외는 아래와 같다.
+
+- `ArithmeticException`: 0으로 나눔
+- `ArrayIndexOutOfBoundsException`
+- `NullPointerException`
+- `NumberFormatException`: `Integer.parseInt("a")`
+
+이들은 모두 `RuntimeException`의 자식이라서 `catch (RuntimeException e)`로도, `catch (Exception e)`로도 잡힌다. 예외는 `throw new X("msg")`로 직접 던질 수 있고, 넣은 메시지는 `e.getMessage()`로 꺼낸다.
 
 ### 예제
 ```java

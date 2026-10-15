@@ -163,6 +163,16 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .prose tr:last-child td{border-bottom:0}
 .prose td:first-child{color:var(--ink)}
 .prose td.ox,.prose th.ox{text-align:center}
+/* 연달은 표: 원래 너비(flex-basis:auto)의 합이 한 줄에 들어가면 좌우, 아니면 줄바꿈 */
+.trow{display:flex;flex-wrap:wrap;align-items:flex-start;column-gap:18px}
+.tcell{flex:0 1 auto;min-width:0;max-width:100%}
+.tcell > p{margin-bottom:10px}
+.tcell table{min-width:0}
+.tcell.grow{flex-grow:1}
+.tcell.solo{flex-basis:100%}
+.out .tbl{border:0;border-radius:0;margin:0}
+.out .trow{column-gap:0}
+.out .tcell{box-shadow:-1px 0 0 var(--line),0 -1px 0 var(--line)}
 
 /* 코드 블록: macOS 창 */
 .code{margin:0 0 6px;border-radius:7px;overflow:hidden;background:var(--code-bg);box-shadow:0 8px 24px -12px rgba(15,20,35,.35)}
@@ -328,6 +338,7 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
   .code pre{padding:13px 14px;font-size:13px;line-height:1.6}
   .out pre{font-size:13px;padding:10px 12px}
   /* 표: 짧은 표는 작게, 긴 표는 카드로 */
+  .trow{display:block}
   .prose table{font-size:14px;min-width:0}
   .prose th,.prose td{padding:8px 10px}
   .tbl.keep table{min-width:0;width:100%}
@@ -500,9 +511,8 @@ p.swipe{margin:0 0 6px;font-size:12.5px;color:var(--muted);text-align:right}
 @media (max-width:640px){.hero.slim{padding:18px 16px 34px}.hero.slim h1{font-size:22px}.unit{grid-template-columns:minmax(0,1fr) auto;padding:12px 14px}.unit .no{display:none}.unit .bd b{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-</head>
-<body>
-<div class="progress" aria-hidden="true"></div>
+
+</head><body><div class="progress" aria-hidden="true"></div>
 <header class="topbar">
   <button class="iconbtn" id="menuBtn" aria-label="카테고리 열기"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <a class="brand" href="#home"><b>실</b>정처기 실기 노트</a>
@@ -606,6 +616,23 @@ function enhanceBody(body){
       rows.forEach(r=>{const n=r.children[0].textContent.trim();r.children[1].insertAdjacentHTML('afterbegin',`<span class="rk">${n}.</span>`)});
     }
   });
+  // 연달아 나오는 표는 한 줄에 묶는다. 표 바로 앞의 짧은 안내 문장(60자 이하)은 그 표와 한 칸으로 다닌다.
+  // 나란히 놓을지는 CSS flex-wrap이 표의 원래 너비로 정한다(넓은 화면에서 둘이 들어가면 좌우, 아니면 위아래).
+  const unitAt=el=>{
+    if(!el) return null;
+    if(el.classList?.contains('tbl')) return [el];
+    if(el.tagName==='P' && el.textContent.trim().length<=60 && !/^출력\s*[:：]/.test(el.textContent.trim()) && el.nextElementSibling?.classList.contains('tbl')) return [el,el.nextElementSibling];
+    return null;
+  };
+  [...body.querySelectorAll('.tbl')].forEach(t=>{
+    if(t.parentElement.classList.contains('tcell')) return;
+    let start=unitAt(t.previousElementSibling)?.[1]===t?t.previousElementSibling:t;
+    const units=[];let el=start,u;
+    while((u=unitAt(el))){units.push(u);el=u[u.length-1].nextElementSibling}
+    if(units.length<2) return;
+    const row=document.createElement('div');row.className='trow';start.before(row);
+    units.forEach(u=>{const c=document.createElement('div');c.className='tcell';u.forEach(x=>c.appendChild(x));row.appendChild(c)});
+  });
   body.querySelectorAll('code').forEach(c=>{if(!c.closest('pre')&&c.textContent.length<=22)c.classList.add('nw')});
   // 그림 블록
   [...body.querySelectorAll('pre > code')].forEach(code=>{
@@ -635,7 +662,7 @@ function enhanceBody(body){
   [...body.querySelectorAll('p')].forEach(p=>{
     if(!/^출력\s*[:：]\s*$/.test(p.textContent.trim())) return;
     const nx=p.nextElementSibling; if(!nx) return;
-    const t=nx.matches('table')?nx:(nx.querySelector&&nx.querySelector(':scope > table')&&nx.children.length===1?nx:null); if(!t) return;
+    const t=nx.matches('table')||nx.classList.contains('trow')?nx:(nx.querySelector&&nx.querySelector(':scope > table')&&nx.children.length===1?nx:null); if(!t) return;
     const box=document.createElement('div');box.className='out out-tbl';
     box.innerHTML='<div class="lb"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m5 8 4 4-4 4M11 16h8"/></svg>실행 결과</div>';
     p.replaceWith(box);box.appendChild(t);
@@ -823,6 +850,11 @@ async function showSet(id,n){
     // 넘치는 표: 칸이 아주 짧은 격자(○/✕, 숫자, 참조열)만 옆으로 밀어 보고, 설명이 섞인 표는 카드로
     if(+w.dataset.p75>10 && w.querySelectorAll('thead th').length<=6){w.classList.remove('keep');w.classList.add('stack');return}
     w.classList.add('wide');w.insertAdjacentHTML('beforebegin','<p class="swipe">옆으로 밀어서 보기 →</p>')}});
+  // 연달은 표: 원래 너비로 줄을 나눈 뒤, 같은 줄을 나눠 쓰는 표는 줄 너비를 채우고 혼자 남은 표는 반 줄보다 넓을 때만 한 줄 전체를 쓴다(좁은 표는 원래 너비)
+  if(!phone) body.querySelectorAll('.trow').forEach(row=>{
+    const cs=[...row.children],cnt={};cs.forEach(c=>cnt[c.offsetTop]=(cnt[c.offsetTop]||0)+1);
+    cs.forEach(c=>{if(cnt[c.offsetTop]>1)c.classList.add('grow');else if(c.offsetWidth>row.clientWidth/2)c.classList.add('solo')});
+  });
   drawFigures(body);
   applyDone(sec);
   body.addEventListener('click',e=>{
@@ -897,5 +929,3 @@ async function doSearch(){
 }
 route();
 </script>
-</body>
-</html>

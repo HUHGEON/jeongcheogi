@@ -189,7 +189,12 @@ SELECT 급여 FROM 사원 WHERE 부서번호 = 20;
 2500
 ```
 
-서브쿼리 앞에 붙는 비교 연산자는 이 목록을 어떻게 볼지 정한다. `> ALL`은 서브쿼리 결과의 모든 값보다 커야 참이므로, 목록 {1000, 2500}이라면 1000과 2500을 둘 다 넘어야 한다. 결국 **최댓값보다** 크면 참이다. 반면 `> ANY`는 그중 하나보다만 크면 참이라 1000만 넘어도 된다. 결국 **최솟값보다** 크기만 하면 참이다. 방향을 뒤집으면 `< ALL`은 최솟값보다 작아야 참이고, `< ANY`는 최댓값보다 작으면 참이다.
+서브쿼리 앞에 붙는 비교 연산자는 이 목록을 어떻게 볼지 정한다. 목록이 {1000, 2500}일 때로 보면 이렇다.
+
+- `> ALL`: 모든 값보다 커야 참. 1000과 2500을 둘 다 넘어야 함. 결국 **최댓값보다** 크면 참
+- `> ANY`: 하나보다만 크면 참. 1000만 넘어도 됨. 결국 **최솟값보다** 크면 참
+- `< ALL`: 최솟값보다 작아야 참
+- `< ANY`: 최댓값보다 작으면 참
 
 이름이 달라 혼동하기 쉬운데 **ANY와 SOME은 같은 뜻**이다. 같은 식으로 `IN`은 `= ANY`와, `NOT IN`은 `<> ALL`과 같다. `EXISTS`는 성격이 조금 다르다. 값을 비교하지 않고, 서브쿼리가 행을 하나라도 돌려주는지만 본다.
 
@@ -580,7 +585,15 @@ INSERT INTO 교수(교수번호, 이름, 이메일, 나이) VALUES (1,'김교수
 INSERT INTO 교수 VALUES (2,'이교수','lee@x.kr',50,'D2');
 ```
 
-위에서부터 읽으면 PRIMARY KEY는 NULL도 중복도 안 되고, NOT NULL은 비울 수 없고, UNIQUE는 중복만 막고 NULL은 허용한다. CHECK는 값이 조건식을 만족해야 하고, DEFAULT는 값을 안 주면 넣을 기본값이다. 마지막 줄의 외래키는 `CONSTRAINT 이름 FOREIGN KEY (컬럼) REFERENCES 부모테이블(컬럼)` 순서로 쓰고, 26-1은 이 문장을 5칸 빈칸으로 냈다. 제약조건마다 실제로 어떤 값을 막는지는 3단계에서 하나씩 어겨 보며 확인한다.
+위에서부터 읽으면 이렇다.
+
+- PRIMARY KEY: NULL도 중복도 불가
+- NOT NULL: 비울 수 없음
+- UNIQUE: 중복만 막고 NULL은 허용
+- CHECK: 값이 조건식을 만족해야 함
+- DEFAULT: 값을 안 주면 넣을 기본값
+
+마지막 줄의 외래키는 `CONSTRAINT 이름 FOREIGN KEY (컬럼) REFERENCES 부모테이블(컬럼)` 순서로 쓰고, 26-1은 이 문장을 5칸 빈칸으로 냈다. 제약조건마다 실제로 어떤 값을 막는지는 3단계에서 하나씩 어겨 보며 확인한다.
 
 #### 2. 만든 뒤 고치고 지우기: ALTER·INDEX·VIEW·DROP
 테이블을 만든 뒤에 컬럼을 더하거나 빼고, 인덱스와 뷰를 만들고, 다 쓴 객체를 지우는 문장은 아래와 같다.
@@ -594,7 +607,12 @@ INSERT INTO 교수 VALUES (2,'이교수','lee@x.kr',50,'D2');
 | 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남', '여'));` (표준 문법, sqlite 미지원. PostgreSQL에서 실행 확인) |
 | 삭제 | `DROP TABLE 교수 CASCADE;` / `DROP VIEW 고령교수;` / `DROP INDEX idx_교수_이름;` |
 
-DROP 뒤에 붙는 옵션도 짚고 가자. **DROP ... CASCADE**는 지우려는 객체만이 아니라 그 객체를 참조하는 다른 객체(뷰·외래키)까지 함께 삭제한다. 반대로 **RESTRICT**는 참조하는 객체가 있으면 삭제를 막는다. 참고로 sqlite는 CASCADE 옵션을 받지 않아서 아래에서는 옵션 없이 실행했고, `DROP TABLE ... CASCADE`의 동작은 PostgreSQL에서 실행해 확인했다.
+DROP 뒤에 붙는 옵션도 짚고 가자.
+
+- **DROP ... CASCADE**: 지우려는 객체와 그 객체를 참조하는 다른 객체(뷰·외래키)까지 함께 삭제
+- **RESTRICT**: 참조하는 객체가 있으면 삭제 거부
+
+참고로 sqlite는 CASCADE 옵션을 받지 않아서 아래에서는 옵션 없이 실행했고, `DROP TABLE ... CASCADE`의 동작은 PostgreSQL에서 실행해 확인했다.
 
 #### 3. 제약조건을 어기면
 그럼 제약조건을 어기면 실제로 어떤 오류가 날까? 위 교수 테이블에 1·2번 교수가 들어 있고 학과는 D1·D2만 있는 상태에서 하나씩 어겨 보면 이렇다.
@@ -1577,7 +1595,14 @@ SELECT 이름, COALESCE(점수, 0) FROM 학생;
 | **DENSE_RANK()** | 공동 순위를 주되 건너뛰지 않는다 | 1, 2, 2, 3 |
 | **ROW_NUMBER()** | 같아도 무조건 다른 번호 | 1, 2, 3, 4 |
 
-윈도우 함수는 **OLAP 함수**라고도 부른다. 종류를 묶어 보면 집계(SUM·AVG… OVER), **순위**(RANK·DENSE_RANK·ROW_NUMBER), **행 순서**(FIRST_VALUE·LAST_VALUE, 이전 행 값을 가져오는 **LAG**와 다음 행 값을 가져오는 **LEAD**), **그룹 내 비율**(RATIO_TO_REPORT·PERCENT_RANK·CUME_DIST·NTILE)이 있다. PARTITION BY는 생략할 수도 있는데, 생략하면 전체가 하나의 윈도우가 된다.
+윈도우 함수는 **OLAP 함수**라고도 부른다. 종류를 묶어 보면 네 가지다.
+
+- 집계: SUM·AVG… OVER
+- **순위**: RANK·DENSE_RANK·ROW_NUMBER
+- **행 순서**: FIRST_VALUE·LAST_VALUE, 이전 행 값을 가져오는 **LAG**, 다음 행 값을 가져오는 **LEAD**
+- **그룹 내 비율**: RATIO_TO_REPORT·PERCENT_RANK·CUME_DIST·NTILE
+
+PARTITION BY는 생략할 수도 있는데, 생략하면 전체가 하나의 윈도우가 된다.
 
 ```sql
 CREATE TABLE 성적(이름 TEXT, 반 TEXT, 점수 INT);
@@ -1602,11 +1627,13 @@ SELECT 이름, 반, 점수, SUM(점수) OVER (PARTITION BY 반) AS 반합계 FRO
 출력: `가 A 90 320`, `나 A 80 320`, `다 A 80 320`, `라 A 70 320`, `마 B 85 145`, `바 B 60 145` (6행이 그대로 남고 반별 합계가 옆에 붙는다. `GROUP BY 반`이었다면 `A 320`, `B 145` 두 행)
 
 #### 5. 소계와 총계: ROLLUP·CUBE·GROUPING SETS
-- **ROLLUP(A, B)**: (A, B)별 소계, A별 소계, 총계
-- **CUBE(A, B)**: (A, B)·A·B·전체, 가능한 모든 조합의 소계
-- **GROUPING SETS((A), (B))**: 지정한 묶음별 집계만
+**그룹 함수**는 GROUP BY 뒤에 써서 소계·총계 행을 함께 만들어 주는 함수다. 세 가지가 헷갈리기 쉽다.
 
-**그룹 함수**는 GROUP BY 뒤에 써서 소계·총계 행을 함께 만들어 주는 함수다. 세 가지가 헷갈리기 쉬워서 위 목록을 하나씩 풀어 쓴다. **ROLLUP(A, B)**는 (A, B)별 소계와 A별 소계, 그리고 총계를 만든다. 컬럼이 n개면 n+1단계가 나오고, 컬럼 순서가 바뀌면 결과도 바뀐다. **CUBE(A, B)**는 가능한 모든 조합인 (A, B)·A·B·전체의 소계를 만든다. **GROUPING SETS((A), (B))**는 지정한 묶음별 집계만 만들고, 컬럼 순서와도 상관없다. 예를 들어 위 성적 표에서 `SELECT 반, SUM(점수) FROM 성적 GROUP BY ROLLUP(반) ORDER BY 반;`을 실행하면 `A 320`, `B 145`, `NULL 465`가 나오는데, 마지막 행이 총계다. sqlite는 ROLLUP을 지원하지 않아 PostgreSQL에서 실행해 확인했다.
+- **ROLLUP(A, B)**: (A, B)별 소계, A별 소계, 총계. 컬럼이 n개면 n+1단계, 컬럼 순서가 바뀌면 결과도 바뀜
+- **CUBE(A, B)**: (A, B)·A·B·전체, 가능한 모든 조합의 소계
+- **GROUPING SETS((A), (B))**: 지정한 묶음별 집계만. 컬럼 순서와 무관
+
+예를 들어 위 성적 표에서 `SELECT 반, SUM(점수) FROM 성적 GROUP BY ROLLUP(반) ORDER BY 반;`을 실행하면 `A 320`, `B 145`, `NULL 465`가 나오는데, 마지막 행이 총계다. sqlite는 ROLLUP을 지원하지 않아 PostgreSQL에서 실행해 확인했다.
 
 ## 프로시저·트리거·사용자 정의 함수·커서
 출제: 없음
