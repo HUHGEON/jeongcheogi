@@ -90,6 +90,8 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .cat.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
 .cat.active .ic{background:var(--accent);color:#fff}
 .cat.home .ic{font-family:var(--body)}
+.cat .chev{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;opacity:.7}
+.cat[aria-expanded="true"] .chev{transform:rotate(90deg)}
 
 /* 히어로 띠 */
 .hero{position:relative;background:linear-gradient(135deg,var(--hero),var(--hero-2));color:#fff;padding:54px 24px 72px;text-align:center;overflow:hidden}
@@ -922,13 +924,18 @@ async function load(id){
 
 /* 렌더 */
 const side=document.getElementById('side'),main=document.getElementById('main'),toc=document.getElementById('toc');
+// 지금 열린 영역의 소단위 목록을 접었는지. 다른 영역으로 가면 다시 펼친다
+let sideFold=null,sideActive=null,sideCur=null;
 function renderSide(active,cur){
+  if(active!==sideActive) sideFold=null;
+  sideActive=active;sideCur=cur;
   const groups=[...new Set(PAGES.map(p=>p.group))];
   side.innerHTML=`<div class="who"><div class="av">실기</div><div><b>정처기 실기 노트</b><span>2020~2026 기출 21회차 기준</span></div></div>
   <a class="cat home ${active==='home'?'active':''}" href="#home"><span class="ic">홈</span><span class="nm">처음으로</span></a>`+
   groups.map(g=>`<div class="cat-label">··· ${g}</div>`+PAGES.filter(p=>p.group===g).map(p=>{const c=cache[p.id];const t=c?c.sets.length:'';const d=c?c.sets.filter(s=>done[s.id]).length:0;
-    const sub=(active===p.id&&c)?`<div class="units-side">${c.sets.map(s=>`<a href="#${s.id}" class="${s.id===cur?'on':''} ${done[s.id]?'dn':''}"><span>${esc(s.title)}</span>${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</a>`).join('')}</div>`:'';
-    return `<a class="cat ${active===p.id?'active':''}" href="#${p.id}"><span class="ic">${p.ab}</span><span class="nm">${p.title}</span>${c?`<span class="ct">${d?d+'/':''}${t}</span>`:''}</a>${sub}`}).join('')).join('');
+    const open=active===p.id&&c&&sideFold!==p.id;
+    const sub=open?`<div class="units-side">${c.sets.map(s=>`<a href="#${s.id}" class="${s.id===cur?'on':''} ${done[s.id]?'dn':''}"><span>${esc(s.title)}</span>${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</a>`).join('')}</div>`:'';
+    return `<a class="cat ${active===p.id?'active':''}" href="#${p.id}"${active===p.id&&c?` aria-expanded="${open}"`:''}><span class="ic">${p.ab}</span><span class="nm">${p.title}</span>${c?`<span class="ct">${d?d+'/':''}${t}</span>`:''}${active===p.id&&c?'<svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>':''}</a>${sub}`}).join('')).join('');
   document.querySelectorAll('.tabbar a[data-tab]').forEach(a=>a.classList.toggle('on',a.dataset.tab===active));
   const on=side.querySelector('.units-side a.on'); if(on) on.scrollIntoView({block:'nearest'});
 }
@@ -1019,7 +1026,11 @@ function closeSide(){side.classList.remove('open');scrim.hidden=true}
 document.getElementById('menuBtn').addEventListener('click',()=>side.classList.contains('open')?closeSide():openSide());
 document.getElementById('tabMenu').addEventListener('click',e=>{e.preventDefault();side.classList.contains('open')?closeSide():openSide()});
 scrim.addEventListener('click',closeSide);
-side.addEventListener('click',e=>{if(e.target.closest('a'))closeSide()});
+side.addEventListener('click',e=>{
+  // 지금 보고 있는 영역을 다시 누르면 이동하지 않고 소단위 목록만 접었다 편다
+  const cat=e.target.closest('a.cat[aria-expanded]');
+  if(cat){e.preventDefault();const id=cat.getAttribute('href').slice(1);sideFold=sideFold===id?null:id;renderSide(sideActive,sideCur);return}
+  if(e.target.closest('a'))closeSide()});
 const search=document.getElementById('search'),q=document.getElementById('q'),res=document.getElementById('res');
 function openSearch(){search.hidden=false;q.value='';res.innerHTML='<div class="empty">두 글자 이상 입력하세요</div>';setTimeout(()=>q.focus(),30);Promise.allSettled(PAGES.map(p=>load(p.id)))}
 function closeSearch(){search.hidden=true}
