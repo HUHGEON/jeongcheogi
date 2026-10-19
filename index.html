@@ -888,6 +888,8 @@ async function drawFigures(root){
     } else src=src.replace(/^(\s*)direction\s+(TB|LR|BT|RL)/m,'$1direction '+m[1]);
     n.textContent=src;
   });
+  // 글꼴이 오기 전에 그리면 mermaid가 대체 글꼴로 글자 폭을 재서 칸이 좁아진다(바로 연 페이지에서 '/24'가 '/2'로 잘림). 본문 글꼴을 받은 뒤 그린다
+  try{await Promise.all(['400','700'].map(w=>document.fonts.load(w+' 15px "Nanum Gothic"')))}catch(e){}
   try{await loadMermaid();await mermaid.run({nodes})}catch(e){nodes.forEach(n=>{if(!n.querySelector('svg'))n.closest('.fig').classList.add('fig-err')})}
 }
 function parsePage(id,md){
