@@ -917,11 +917,15 @@ function parsePage(id,md){
   sets.forEach((s,i)=>{const c=out.children[i].cloneNode(true);c.querySelectorAll('.fig').forEach(f=>f.remove());s.text=c.textContent.replace(/\s+/g,' ').trim()});
   return {title,introHTML:intro.innerHTML,bodyEl:out,sets};
 }
+// 같은 영역을 동시에 부르면(첫 화면 + 미리 받기) 받는 중인 것을 같이 기다린다
+const loading={};
 async function load(id){
   if(cache[id]) return cache[id];
-  const r=await fetch(`content/${id}.md`,{cache:'no-cache'});
-  if(!r.ok) throw new Error(`${byId[id].title} 내용을 불러오지 못했습니다(${r.status}). 새로고침해 보세요.`);
-  return cache[id]=parsePage(id,await r.text());
+  return loading[id]||(loading[id]=(async()=>{
+    const r=await fetch(`content/${id}.md`,{cache:'no-cache'});
+    if(!r.ok) throw new Error(`${byId[id].title} 내용을 불러오지 못했습니다(${r.status}). 새로고침해 보세요.`);
+    return cache[id]=parsePage(id,await r.text());
+  })().finally(()=>delete loading[id]));
 }
 
 /* 렌더 */
@@ -1059,4 +1063,6 @@ async function doSearch(){
     return `<a href="#${s.id}"><div class="p">${p.title}${s.rounds.length?` · 기출 ${s.rounds.length}회`:''}</div><div class="t">${esc(s.title).replace(re,m=>`<mark>${m}</mark>`)}</div><div class="s">${esc(sn).replace(re,m=>`<mark>${m}</mark>`)}</div></a>`}).join('');
 }
 route();
+// 사이드바의 영역별 묶음 수는 그 영역을 받아야 알 수 있다. 첫 화면을 띄운 뒤 나머지 영역도 받아 두고 사이드바를 다시 그린다
+Promise.allSettled(PAGES.map(p=>load(p.id))).then(()=>renderSide(sideActive,sideCur));
 </script>
