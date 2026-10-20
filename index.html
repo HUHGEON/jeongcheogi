@@ -234,6 +234,25 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .card .f{margin-top:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .card .f .bar{flex:1;height:4px;border-radius:2px;background:var(--bg-2);overflow:hidden}
 .card .f .bar i{display:block;height:100%;background:var(--ok)}
+.plan-cta{display:block;padding:16px 18px;margin:0 0 8px;border:1.5px solid var(--accent-line);border-radius:12px;background:var(--accent-soft)}
+.plan-cta b{display:block;font-size:17px;color:var(--accent-ink)}
+.plan-cta span{font-size:14.5px;color:var(--text)}
+.plan .sec-t{margin-top:44px}
+.pk{display:inline-flex;align-items:center;gap:6px;margin:3px 6px 3px 0;padding:4px 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;line-height:1.45;cursor:pointer;text-align:left}
+.pk em{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--accent-ink)}
+.pk.t1{background:var(--accent-soft);border-color:var(--accent-line)}
+.pk:hover{border-color:var(--accent)}
+.pk.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pk.on em{color:#fff}
+.pk.miss{opacity:.5;cursor:default}
+.pk-panel{border:1.5px solid var(--accent-line);border-radius:12px;padding:16px 20px 6px;margin:-6px 0 28px;scroll-margin-top:calc(var(--bar) + 12px)}
+.pk-h{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.pk-h small{display:block;font-size:12.5px;color:var(--muted)}
+.pk-h b{font-size:19px;line-height:1.45;color:var(--ink)}
+.pk-x{flex:none;border:1px solid var(--line);background:var(--bg-2);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
+.pk-f{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}
+.pk-go{display:inline-block;font-size:14px;font-weight:700;color:var(--accent-ink)}
+@media (max-width:640px){.pk-panel{padding:14px 14px 4px;margin-left:-4px;margin-right:-4px}.pk{font-size:13.5px}}
 .hot-list{border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .hot-list a{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
 .hot-list a:first-child{border-top:0}
@@ -973,7 +992,8 @@ function renderSide(active,cur){
   sideActive=active;sideCur=cur;
   const groups=[...new Set(PAGES.map(p=>p.group))];
   side.innerHTML=`<div class="who"><div class="av">실기</div><div><b>정처기 실기 노트</b><span>2020~2026 기출 21회차 기준</span></div></div>
-  <a class="cat home ${active==='home'?'active':''}" href="#home"><span class="ic">홈</span><span class="nm">처음으로</span></a>`+
+  <a class="cat home ${active==='home'?'active':''}" href="#home"><span class="ic">홈</span><span class="nm">처음으로</span></a>
+  <a class="cat home ${active==='plan'?'active':''}" href="#plan"><span class="ic">압</span><span class="nm">압축 공부법</span></a>`+
   groups.map(g=>`<div class="cat-label">··· ${g}</div>`+PAGES.filter(p=>p.group===g).map(p=>{const c=cache[p.id];const t=c?c.sets.length:'';const d=c?c.sets.filter(s=>done[s.id]).length:0;
     const open=active===p.id&&c&&sideFold!==p.id;
     const sub=open?`<div class="units-side">${c.sets.map(s=>`<a href="#${s.id}" class="${s.id===cur?'on':''} ${done[s.id]?'dn':''}"><span>${esc(s.title)}</span>${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</a>`).join('')}</div>`:'';
@@ -1010,6 +1030,18 @@ async function showSet(id,n){
   <div class="pager">${prev?`<a href="#${prev.id}"><span class="k">‹ 이전</span><span class="t">${esc(prev.title)}</span></a>`:prevArea?`<a href="#${prevArea.id}"><span class="k">‹ 이전 영역</span><span class="t">${prevArea.title}</span></a>`:''}${next?`<a class="nx" href="#${next.id}"><span class="k">다음 ›</span><span class="t">${esc(next.title)}</span></a>`:nextArea?`<a class="nx" href="#${nextArea.id}"><span class="k">다음 영역 ›</span><span class="t">${nextArea.title}</span></a>`:''}</div>
   <a class="back" href="#${id}">${p.title} 목차로</a></div>`;
   const body=main.querySelector('#body');const sec=pg.bodyEl.children[n-1].cloneNode(true);sec.classList.add('single');sec.querySelector('.set-h h2').remove();sec.querySelector('.set-h .no').remove();sec.querySelector('.chk').insertAdjacentHTML('beforeend','<span>다 봤음</span>');body.appendChild(sec);
+  finishBody(body);
+  applyDone(sec);
+  body.addEventListener('click',e=>{
+    const b=e.target.closest('.chk');
+    if(b){const k=b.dataset.set;if(done[k])delete done[k];else done[k]=true;store.set('jcg-done',done);applyDone(sec);renderSide(id,s.id);return}
+    codeClick(e);
+  });
+  toc.innerHTML=`<h5>${p.title}</h5>`+pg.sets.map(x=>`<a href="#${x.id}" class="${x.id===s.id?'on':''}">${esc(x.title)}</a>`).join('');
+  window.scrollTo(0,0);
+}
+// 본문을 화면에 붙인 뒤 할 일: 코드 색칠, 폰 표 처리, 연달은 표 너비, 그림
+function finishBody(body){
   const phone=matchMedia('(max-width:640px)').matches;
   body.querySelectorAll('.code').forEach(c=>{const el=c.querySelector('pre code');try{hljs.highlightElement(el)}catch(e){}lineify(el);if(phone){c.classList.add('wrap');c.querySelector('.wr').textContent='가로 보기'}});
   if(phone) body.querySelectorAll('.tbl.keep').forEach(w=>{if(w.scrollWidth>w.clientWidth+2){
@@ -1023,17 +1055,13 @@ async function showSet(id,n){
   });
   body.querySelectorAll('.pg-s').forEach(w=>{if(w.scrollWidth>w.clientWidth+2)w.insertAdjacentHTML('beforebegin','<p class="swipe">옆으로 밀어서 보기 →</p>')});
   drawFigures(body);
-  applyDone(sec);
-  body.addEventListener('click',e=>{
-    const b=e.target.closest('.chk');
-    if(b){const k=b.dataset.set;if(done[k])delete done[k];else done[k]=true;store.set('jcg-done',done);applyDone(sec);renderSide(id,s.id);return}
-    const wr=e.target.closest('.wr');if(wr){const c=wr.closest('.code');c.classList.toggle('wrap');wr.textContent=c.classList.contains('wrap')?'가로 보기':'줄바꿈';return}
-    const cp=e.target.closest('.cp');
-    if(cp){const txt=cp.closest('.code').querySelector('pre').innerText;const ok=()=>{cp.textContent='복사됨';setTimeout(()=>cp.textContent='복사',1200)};
-      try{navigator.clipboard.writeText(txt).then(ok,()=>{selectText(cp)})}catch(err){selectText(cp)}}
-  });
-  toc.innerHTML=`<h5>${p.title}</h5>`+pg.sets.map(x=>`<a href="#${x.id}" class="${x.id===s.id?'on':''}">${esc(x.title)}</a>`).join('');
-  window.scrollTo(0,0);
+}
+function codeClick(e){
+  const wr=e.target.closest('.wr');if(wr){const c=wr.closest('.code');c.classList.toggle('wrap');wr.textContent=c.classList.contains('wrap')?'가로 보기':'줄바꿈';return true}
+  const cp=e.target.closest('.cp');
+  if(cp){const txt=cp.closest('.code').querySelector('pre').innerText;const ok=()=>{cp.textContent='복사됨';setTimeout(()=>cp.textContent='복사',1200)};
+    try{navigator.clipboard.writeText(txt).then(ok,()=>{selectText(cp)})}catch(err){selectText(cp)}return true}
+  return false;
 }
 function selectText(btn){const pre=btn.closest('.code').querySelector('pre');const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='선택됨';setTimeout(()=>btn.textContent='복사',1200)}
 function applyDone(sec){const on=!!done[sec.dataset.set];sec.classList.toggle('done',on);sec.querySelector('.chk').classList.toggle('on',on)}
@@ -1048,6 +1076,7 @@ async function showHome(){
   main.innerHTML=hero('정보처리기사 실기','정처기 실기 노트',`<span>묶음 <b>${total}</b></span><span>기출에 나온 묶음 <b>${tested}</b></span><span>봤음 <b>${d}</b> (${total?Math.round(d/total*100):0}%)</span>`)+
   `<div class="post">
     <div class="home-intro"><p>2020년 1회부터 2026년 2회까지 실기 기출 21회차, 420문제를 기준으로 정리한 노트입니다. 한 문제에 같이 나오는 개념끼리 묶었고, 묶음마다 실제로 나온 회차를 붙였습니다. 서브넷·스케줄링 같은 계산 문제는 풀이 순서대로 따로 모았습니다.</p></div>
+    <a class="plan-cta" href="#plan"><b>압축 공부법 →</b><span>시간이 없을 때 이론을 보는 순서. 항목을 누르면 개념이 그 자리에서 펼쳐진다</span></a>
     <h2 class="sec-t">카테고리</h2>
     <div class="cards">${PAGES.map((p,i)=>{const s=rs[i].status==='fulfilled'?rs[i].value.sets:[];const dd=s.filter(x=>done[x.id]).length;const tr=s.reduce((a,x)=>a+x.rounds.length,0);
       return `<a class="card" href="#${p.id}" style="--c1:${p.c[0]};--c2:${p.c[1]}"><div class="th"><b>${p.title}</b><span>${p.group}</span></div><div class="bd"><div class="d">${p.desc}</div><div class="f"><span>${s.length}개 묶음, 기출 ${tr}건</span><span class="bar"><i style="width:${s.length?Math.round(dd/s.length*100):0}%"></i></span><span>${dd}/${s.length}</span></div></div></a>`}).join('')}</div>
@@ -1057,8 +1086,56 @@ async function showHome(){
   window.scrollTo(0,0);
 }
 
+/* 압축 공부법: 우선순위 표의 항목([이름](@영역/제목일부))을 누르면 그 묶음 내용을 표 바로 밑에 펼친다 */
+function findSet(pid,q){
+  const pg=cache[pid];if(!pg) return null;const k=s=>s.title.replace(/\s/g,'');
+  return pg.sets.find(s=>k(s)===q)||pg.sets.find(s=>k(s).startsWith(q))||pg.sets.find(s=>k(s).includes(q))||null;
+}
+async function showPlan(){
+  renderSide('plan');toc.innerHTML='';skel();
+  let md;
+  try{
+    const [r]=await Promise.all([fetch('content/plan.md',{cache:'no-cache'}),Promise.allSettled(PAGES.map(p=>load(p.id)))]);
+    if(!r.ok) throw new Error(`압축 공부법을 불러오지 못했습니다(${r.status}). 새로고침해 보세요.`);
+    md=await r.text();
+  }catch(e){main.innerHTML=`<div class="post"><div class="err">${esc(e.message)}</div></div>`;return}
+  renderSide('plan');
+  const body=document.createElement('div');body.className='prose plan';body.innerHTML=marked.parse(preprocess(md));
+  const h1=body.querySelector('h1');const title=h1?h1.textContent.trim():'압축 공부법';if(h1)h1.remove();
+  body.querySelectorAll('h2').forEach(h=>h.className='sec-t');
+  body.querySelectorAll('a[href^="@"]').forEach(a=>{
+    const [pid,q]=decodeURIComponent(a.getAttribute('href').slice(1)).split('/');
+    const s=findSet(pid,q),t=a.textContent.trim(),tier=/^⭐/.test(t)?'t1':/^🔥/.test(t)?'t2':'t3';
+    if(!s){console.error('[plan] 묶음을 못 찾음',a.getAttribute('href'));a.outerHTML=`<span class="pk miss ${tier}">${esc(t)}</span>`;return}
+    a.outerHTML=`<button type="button" class="pk ${tier}" data-p="${pid}" data-n="${s.num}" aria-expanded="false">${esc(t)}${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</button>`;
+  });
+  enhanceBody(body);
+  body.querySelectorAll('.tbl').forEach(w=>{if(w.querySelector('.pk'))w.insertAdjacentHTML('afterend','<div class="pk-panel" hidden></div>')});
+  main.innerHTML=hero('정보처리기사 실기',title,'<span>⭐ 핵심</span><span>🔥 보조</span><span>🤔 후순위</span><span>숫자 = 기출 횟수</span>')+'<div class="post"></div>';
+  main.querySelector('.post').appendChild(body);
+  body.addEventListener('click',e=>{
+    if(codeClick(e)) return;
+    // 긴 내용 아래쪽에서 접으면 누른 항목이 화면 밖에 남으니, 접은 뒤 그 항목으로 돌아간다
+    const x=e.target.closest('.pk-x');if(x){const b=body.querySelector('.pk.on');if(b){togglePk(body,b);b.scrollIntoView({block:'center'});b.focus({preventScroll:true})}return}
+    const b=e.target.closest('button.pk');if(b)togglePk(body,b);
+  });
+  window.scrollTo(0,0);
+}
+function togglePk(body,btn){
+  const panel=btn.closest('.tbl').nextElementSibling,was=btn.classList.contains('on');
+  body.querySelectorAll('.pk.on').forEach(b=>{b.classList.remove('on');b.setAttribute('aria-expanded','false')});
+  body.querySelectorAll('.pk-panel').forEach(p=>{p.hidden=true;p.innerHTML=''});
+  if(was) return;
+  const pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],sec=pg.bodyEl.children[s.num-1];
+  panel.innerHTML=`<div class="pk-h"><div><small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b></div><button type="button" class="pk-x">접기</button></div><div class="pk-b"></div><div class="pk-f"><a class="pk-go" href="#${s.id}">이 묶음 페이지로 가기 →</a><button type="button" class="pk-x">접기</button></div>`;
+  const pb=panel.querySelector('.pk-b');['.meta','.kvs','.prose'].forEach(c=>pb.appendChild(sec.querySelector(c).cloneNode(true)));
+  btn.classList.add('on');btn.setAttribute('aria-expanded','true');panel.hidden=false;
+  finishBody(pb);
+  panel.scrollIntoView({block:'nearest'});
+}
+
 /* 라우팅: #영역 = 목차, #영역-sN = 묶음 한 개 */
-function route(){const h=(location.hash||'#home').slice(1);closeSide();if(!h||h==='home')return showHome();const m=h.match(/^([a-z-]+?)(?:-s(\d+))?$/);if(m&&byId[m[1]])return m[2]?showSet(m[1],+m[2]):showArea(m[1]);showHome()}
+function route(){const h=(location.hash||'#home').slice(1);closeSide();if(!h||h==='home')return showHome();if(h==='plan')return showPlan();const m=h.match(/^([a-z-]+?)(?:-s(\d+))?$/);if(m&&byId[m[1]])return m[2]?showSet(m[1],+m[2]):showArea(m[1]);showHome()}
 window.addEventListener('hashchange',route);
 
 /* 서랍 / 검색 */
