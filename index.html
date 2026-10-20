@@ -958,6 +958,18 @@ async function drawFigures(root){
     } else src=src.replace(/^(\s*)direction\s+(TB|LR|BT|RL)/m,'$1direction '+m[1]);
     n.textContent=src;
   });
+  // 그림이 많은 페이지(압축 공부법 114개)를 한 번에 그리면 폰에서 15~20초 걸린다. 화면 가까이 온 그림만 그린다
+  if(!('IntersectionObserver' in window)) return renderMmd(nodes);
+  mmdIO=mmdIO||new IntersectionObserver(es=>{
+    const vis=es.filter(e=>e.isIntersecting).map(e=>e.target);if(!vis.length) return;
+    vis.forEach(n=>mmdIO.unobserve(n));
+    mmdQ=mmdQ.then(()=>renderMmd(vis.filter(n=>n.isConnected)));  // mermaid.run이 겹치지 않게 차례로
+  },{rootMargin:'1200px 0px'});
+  nodes.forEach(n=>mmdIO.observe(n));
+}
+let mmdIO=null,mmdQ=Promise.resolve();
+async function renderMmd(nodes){
+  if(!nodes.length) return;
   // 글꼴이 오기 전에 그리면 mermaid가 대체 글꼴로 글자 폭을 재서 칸이 좁아진다(바로 연 페이지에서 '/24'가 '/2'로 잘림). 본문 글꼴을 받은 뒤 그린다
   try{await Promise.all(['400','700'].map(w=>document.fonts.load(w+' 15px "Nanum Gothic"')))}catch(e){}
   try{await loadMermaid();await mermaid.run({nodes})}catch(e){nodes.forEach(n=>{if(!n.querySelector('svg'))n.closest('.fig').classList.add('fig-err')})}
