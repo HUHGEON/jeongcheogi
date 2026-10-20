@@ -234,6 +234,12 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .card .f{margin-top:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .card .f .bar{flex:1;height:4px;border-radius:2px;background:var(--bg-2);overflow:hidden}
 .card .f .bar i{display:block;height:100%;background:var(--ok)}
+.qz{border:1px solid var(--line-2);border-radius:12px;padding:14px 18px 12px;margin:0 0 16px;background:var(--bg)}
+.qz-h{display:inline-block;font-size:12.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 10px;margin-bottom:8px}
+.qz>p,.qz li{font-size:15.5px}
+.qz-b{border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:6px 14px;cursor:pointer}
+.qz-a{margin-top:10px;padding:10px 14px 2px;border-left:3px solid var(--accent);background:var(--bg-2);border-radius:0 8px 8px 0}
+.qz-a p:first-child{font-weight:800;color:var(--ink)}
 .plan-cta{display:block;padding:16px 18px;margin:0 0 8px;border:1.5px solid var(--accent-line);border-radius:12px;background:var(--accent-soft)}
 .plan-cta b{display:block;font-size:17px;color:var(--accent-ink)}
 .plan-cta span{font-size:14.5px;color:var(--text)}
@@ -245,14 +251,12 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .pk.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .pk.on em{color:#fff}
 .pk.miss{opacity:.5;cursor:default}
-.pk-panel{border:1.5px solid var(--accent-line);border-radius:12px;padding:16px 20px 6px;margin:-6px 0 28px;scroll-margin-top:calc(var(--bar) + 12px)}
-.pk-h{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.pk-set{padding:26px 0 8px;border-top:1px dashed var(--line-2);scroll-margin-top:calc(var(--bar) + 12px)}
 .pk-h small{display:block;font-size:12.5px;color:var(--muted)}
-.pk-h b{font-size:19px;line-height:1.45;color:var(--ink)}
-.pk-x{flex:none;border:1px solid var(--line);background:var(--bg-2);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
-.pk-f{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}
-.pk-go{display:inline-block;font-size:14px;font-weight:700;color:var(--accent-ink)}
-@media (max-width:640px){.pk-panel{padding:14px 14px 4px;margin-left:-4px;margin-right:-4px}.pk{font-size:13.5px}}
+.pk-h b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(21px,2.8vw,25px);line-height:1.45;color:var(--ink);margin-bottom:8px}
+.pk-up{display:inline-block;margin:0 0 6px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.pk-up:hover{color:var(--accent-ink)}
+@media (max-width:640px){.pk{font-size:13.5px}}
 .hot-list{border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .hot-list a{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
 .hot-list a:first-child{border-top:0}
@@ -643,6 +647,9 @@ function preprocess(md){
   return md.split('\n').map(line=>{
     if(/^\s*```/.test(line)){fence=!fence;return line}
     if(fence) return line;
+    // 기출 문제 카드: ":::q 26-2 2번" ~ ":::" 사이
+    const q=line.match(/^:::q\s+(.+)$/);if(q) return `\n<div class="qz" data-r="${esc(q[1].trim())}">\n`;
+    if(/^:::\s*$/.test(line)) return '\n</div>\n';
     const m=line.match(/^(출제|형태|함정)\s*[:：]\s*(.*)$/);
     if(m) return `\n<p class="meta-line" data-k="${m[1]}">${esc(m[2])}</p>\n`;
     return line.split('`').map((s,i)=>i%2?s:s.replace(/~/g,'&#126;').replace(/\*\*([^*\n]+?)\*\*/g,'<strong>$1</strong>')).join('`');
@@ -741,6 +748,14 @@ function enhanceBody(body){
     const m=p.innerHTML.match(/^출력\s*[:：]\s*(.+)$/s);
     if(m && !p.closest('.out')){const box=document.createElement('div');box.className='out';box.innerHTML='<div class="lb">실행 결과</div><div class="one"></div>';box.querySelector('.one').innerHTML=m[1];p.replaceWith(box);}
   });
+  // 기출 문제 카드: 머리에 회차, "정답:" 줄부터 끝까지는 버튼을 눌러야 보인다
+  body.querySelectorAll('.qz').forEach(q=>{
+    q.insertAdjacentHTML('afterbegin',`<div class="qz-h">기출 ${esc(q.dataset.r)}</div>`);
+    const a=[...q.children].find(x=>x.tagName==='P'&&/^정답\s*[:：]/.test(x.textContent.trim())); if(!a) return;
+    const box=document.createElement('div');box.className='qz-a';box.hidden=true;
+    let n=a;while(n){const nx=n.nextElementSibling;box.appendChild(n);n=nx}
+    q.insertAdjacentHTML('beforeend','<button type="button" class="qz-b" aria-expanded="false">정답 보기</button>');q.appendChild(box);
+  });
   // 소제목 아래를 안내 상자로
   [...body.querySelectorAll(':scope > h3')].forEach(h=>{
     const k=boxKind(h.textContent.trim()); if(!k) return;
@@ -769,7 +784,7 @@ function markExam(body){
     }));
   });
   if(!hits.size) return;
-  const outside=el=>!el.closest('.adm,.out,.code,.fig,.meta-line');
+  const outside=el=>!el.closest('.adm,.out,.code,.fig,.meta-line,.qz');
   const cands=[
     ...body.querySelectorAll('h4'),
     ...[...body.querySelectorAll('tbody td:first-child')],
@@ -1076,7 +1091,7 @@ async function showHome(){
   main.innerHTML=hero('정보처리기사 실기','정처기 실기 노트',`<span>묶음 <b>${total}</b></span><span>기출에 나온 묶음 <b>${tested}</b></span><span>봤음 <b>${d}</b> (${total?Math.round(d/total*100):0}%)</span>`)+
   `<div class="post">
     <div class="home-intro"><p>2020년 1회부터 2026년 2회까지 실기 기출 21회차, 420문제를 기준으로 정리한 노트입니다. 한 문제에 같이 나오는 개념끼리 묶었고, 묶음마다 실제로 나온 회차를 붙였습니다. 서브넷·스케줄링 같은 계산 문제는 풀이 순서대로 따로 모았습니다.</p></div>
-    <a class="plan-cta" href="#plan"><b>압축 공부법 →</b><span>시간이 없을 때 이론을 보는 순서. 항목을 누르면 개념이 그 자리에서 펼쳐진다</span></a>
+    <a class="plan-cta" href="#plan"><b>압축 공부법 →</b><span>시간이 없을 때 이론을 보는 순서. 우선순위 표와 개념, 기출 문제를 한 페이지에</span></a>
     <h2 class="sec-t">카테고리</h2>
     <div class="cards">${PAGES.map((p,i)=>{const s=rs[i].status==='fulfilled'?rs[i].value.sets:[];const dd=s.filter(x=>done[x.id]).length;const tr=s.reduce((a,x)=>a+x.rounds.length,0);
       return `<a class="card" href="#${p.id}" style="--c1:${p.c[0]};--c2:${p.c[1]}"><div class="th"><b>${p.title}</b><span>${p.group}</span></div><div class="bd"><div class="d">${p.desc}</div><div class="f"><span>${s.length}개 묶음, 기출 ${tr}건</span><span class="bar"><i style="width:${s.length?Math.round(dd/s.length*100):0}%"></i></span><span>${dd}/${s.length}</span></div></div></a>`}).join('')}</div>
@@ -1110,28 +1125,33 @@ async function showPlan(){
     a.outerHTML=`<button type="button" class="pk ${tier}" data-p="${pid}" data-n="${s.num}" aria-expanded="false">${esc(t)}${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</button>`;
   });
   enhanceBody(body);
-  body.querySelectorAll('.tbl').forEach(w=>{if(w.querySelector('.pk'))w.insertAdjacentHTML('afterend','<div class="pk-panel" hidden></div>')});
+  // 표마다 그 표에 든 묶음을 표 순서대로 바로 밑에 이어 붙인다
+  body.querySelectorAll('.tbl').forEach(w=>{
+    const bs=[...w.querySelectorAll('button.pk')];if(!bs.length) return;
+    const h=w.previousElementSibling&&w.previousElementSibling.tagName==='H2'?w.previousElementSibling:null;
+    let at=w;const seen=new Set();
+    bs.forEach(btn=>{
+      const pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],key=s.id;
+      btn.dataset.to='pk-'+key;if(seen.has(key)) return;seen.add(key);
+      const sec=pg.bodyEl.children[s.num-1],el=document.createElement('section');
+      el.className='pk-set';el.id='pk-'+key;
+      el.innerHTML=`<div class="pk-h"><small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b></div><div class="pk-b"></div><button type="button" class="pk-up">↑ ${h?esc(h.textContent)+' 표로':'표로'}</button>`;
+      const pb=el.querySelector('.pk-b');['.meta','.kvs','.prose'].forEach(c=>pb.appendChild(sec.querySelector(c).cloneNode(true)));
+      at.after(el);at=el;el._tbl=w;
+    });
+  });
   main.innerHTML=hero('정보처리기사 실기',title,'<span>⭐ 핵심</span><span>🔥 보조</span><span>🤔 후순위</span><span>숫자 = 기출 횟수</span>')+'<div class="post"></div>';
   main.querySelector('.post').appendChild(body);
+  finishBody(body);
+  // 해시를 바꾸면 라우터가 다른 화면으로 보내므로, 항목 이동은 해시 없이 스크롤로 한다
   body.addEventListener('click',e=>{
     if(codeClick(e)) return;
-    // 긴 내용 아래쪽에서 접으면 누른 항목이 화면 밖에 남으니, 접은 뒤 그 항목으로 돌아간다
-    const x=e.target.closest('.pk-x');if(x){const b=body.querySelector('.pk.on');if(b){togglePk(body,b);b.scrollIntoView({block:'center'});b.focus({preventScroll:true})}return}
-    const b=e.target.closest('button.pk');if(b)togglePk(body,b);
+    const b=e.target.closest('button.pk');if(b){document.getElementById(b.dataset.to).scrollIntoView();return}
+    const u=e.target.closest('.pk-up');if(u){const t=u.closest('.pk-set')._tbl;(t.previousElementSibling||t).scrollIntoView()}
   });
+  toc.innerHTML='<h5>압축 공부법</h5>'+[...body.querySelectorAll('h2.sec-t')].map((h,i)=>`<a href="#plan" data-i="${i}">${esc(h.textContent)}</a>`).join('');
+  toc.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();body.querySelectorAll('h2.sec-t')[+a.dataset.i].scrollIntoView()}));
   window.scrollTo(0,0);
-}
-function togglePk(body,btn){
-  const panel=btn.closest('.tbl').nextElementSibling,was=btn.classList.contains('on');
-  body.querySelectorAll('.pk.on').forEach(b=>{b.classList.remove('on');b.setAttribute('aria-expanded','false')});
-  body.querySelectorAll('.pk-panel').forEach(p=>{p.hidden=true;p.innerHTML=''});
-  if(was) return;
-  const pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],sec=pg.bodyEl.children[s.num-1];
-  panel.innerHTML=`<div class="pk-h"><div><small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b></div><button type="button" class="pk-x">접기</button></div><div class="pk-b"></div><div class="pk-f"><a class="pk-go" href="#${s.id}">이 묶음 페이지로 가기 →</a><button type="button" class="pk-x">접기</button></div>`;
-  const pb=panel.querySelector('.pk-b');['.meta','.kvs','.prose'].forEach(c=>pb.appendChild(sec.querySelector(c).cloneNode(true)));
-  btn.classList.add('on');btn.setAttribute('aria-expanded','true');panel.hidden=false;
-  finishBody(pb);
-  panel.scrollIntoView({block:'nearest'});
 }
 
 /* 라우팅: #영역 = 목차, #영역-sN = 묶음 한 개 */
@@ -1175,6 +1195,7 @@ async function doSearch(){
   res.innerHTML=hits.slice(0,30).map(({s,p,ix})=>{const sn=ix>=0?s.text.slice(Math.max(0,ix-50),ix+90):s.text.slice(0,120);
     return `<a href="#${s.id}"><div class="p">${p.title}${s.rounds.length?` · 기출 ${s.rounds.length}회`:''}</div><div class="t">${esc(s.title).replace(re,m=>`<mark>${m}</mark>`)}</div><div class="s">${esc(sn).replace(re,m=>`<mark>${m}</mark>`)}</div></a>`}).join('');
 }
+document.addEventListener('click',e=>{const b=e.target.closest('.qz-b');if(!b)return;const a=b.nextElementSibling,open=a.hidden;a.hidden=!open;b.textContent=open?'정답 숨기기':'정답 보기';b.setAttribute('aria-expanded',open)});
 route();
 // 사이드바의 영역별 묶음 수는 그 영역을 받아야 알 수 있다. 첫 화면을 띄운 뒤 나머지 영역도 받아 두고 사이드바를 다시 그린다
 Promise.allSettled(PAGES.map(p=>load(p.id))).then(()=>renderSide(sideActive,sideCur));
