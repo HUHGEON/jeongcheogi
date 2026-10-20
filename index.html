@@ -255,11 +255,6 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .qz-r{font-size:14px;font-weight:800}
 .qz-r.ok{color:var(--ok)}
 .qz-r.no{color:#d9534f}
-.pk-fab{position:fixed;right:20px;bottom:24px;z-index:45;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 40px);border:1px solid var(--accent);background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;border-radius:999px;padding:10px 16px;box-shadow:0 6px 20px rgba(20,25,40,.2);cursor:pointer;transition:opacity .2s,transform .2s}
-.pk-fab small{font-weight:400;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
-.pk-fab[hidden]{display:flex;opacity:0;transform:translateY(12px);pointer-events:none}
-@media (max-width:960px){.pk-fab{right:14px;bottom:calc(var(--tab) + env(safe-area-inset-bottom,0px) + 12px)}}
-@media (max-width:640px){.pk-fab small{display:none}}
 .qz-a{margin-top:10px;padding:10px 14px 2px;border-left:3px solid var(--accent);background:var(--bg-2);border-radius:0 8px 8px 0}
 .qz-a p:first-child{font-weight:800;color:var(--ink)}
 .plan-cta{display:block;padding:16px 18px;margin:0 0 8px;border:1.5px solid var(--accent-line);border-radius:12px;background:var(--accent-soft)}
@@ -273,11 +268,26 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .pk.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .pk.on em{color:#fff}
 .pk.miss{opacity:.5;cursor:default}
-.pk-set{padding:26px 0 8px;border-top:1px dashed var(--line-2);scroll-margin-top:calc(var(--bar) + 12px)}
+.pk-dlg{width:min(860px,calc(100vw - 48px));max-width:none;height:calc(100dvh - 64px);max-height:none;margin:auto;padding:0;border:0;border-radius:16px;background:var(--bg);color:var(--text);box-shadow:0 24px 60px rgba(20,25,40,.28);overflow:hidden}
+.pk-dlg[open]{display:flex;flex-direction:column}
+.pk-dlg::backdrop{background:rgba(15,18,28,.5)}
+.pk-dlg-h{flex:none;display:flex;align-items:flex-start;gap:12px;padding:16px 16px 10px 26px;border-bottom:1px solid var(--line)}
+.pk-dlg-h .pk-h{flex:1;min-width:0}
+.pk-dlg-h .pk-h b{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.pk-x{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:var(--bg-2);color:var(--ink);font-size:17px;cursor:pointer}
+.pk-x:hover{background:var(--line)}
+.pk-dlg-b{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:14px 26px 30px;outline:0}
+.pk-dlg-f{flex:none;display:flex;justify-content:space-between;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.pk-nav{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:8px 14px;cursor:pointer}
+.pk-nav:disabled{opacity:.4;cursor:default}
+html.dlg-open{overflow:hidden}
+@media (max-width:640px){
+  .pk-dlg{width:100vw;height:calc(100dvh - 28px);margin:auto 0 0;border-radius:16px 16px 0 0}
+  .pk-dlg-h{padding:12px 10px 8px 18px}
+  .pk-dlg-b{padding:10px 18px 24px}
+}
 .pk-h small{display:block;font-size:12.5px;color:var(--muted)}
 .pk-h b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(21px,2.8vw,25px);line-height:1.45;color:var(--ink);margin-bottom:8px}
-.pk-up{display:inline-block;margin:0 0 6px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
-.pk-up:hover{color:var(--accent-ink)}
 @media (max-width:640px){.pk{font-size:13.5px}}
 .hot-list{border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .hot-list a{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
@@ -984,12 +994,18 @@ async function drawFigures(root){
   });
   // 그림이 많은 페이지(압축 공부법 114개)를 한 번에 그리면 폰에서 15~20초 걸린다. 화면 가까이 온 그림만 그린다
   if(!('IntersectionObserver' in window)) return renderMmd(nodes);
-  mmdIO=mmdIO||new IntersectionObserver(es=>{
+  // 창(모달) 안의 그림은 창의 스크롤 상자를 기준으로 본다. 화면 기준이면 상자에 가려진 그림이 미리 그려지지 않는다
+  const sc=root.closest('.pk-dlg-b');
+  const mk=r=>new IntersectionObserver((es,io)=>{
     const vis=es.filter(e=>e.isIntersecting).map(e=>e.target);if(!vis.length) return;
-    vis.forEach(n=>mmdIO.unobserve(n));
+    vis.forEach(n=>io.unobserve(n));
     mmdQ=mmdQ.then(()=>renderMmd(vis.filter(n=>n.isConnected)));  // mermaid.run이 겹치지 않게 차례로
-  },{rootMargin:'1200px 0px'});
-  nodes.forEach(n=>mmdIO.observe(n));
+  },{root:r,rootMargin:'1200px 0px'});
+  const io=sc?(sc._io=sc._io||mk(sc)):(mmdIO=mmdIO||mk(null));
+  nodes.forEach(n=>io.observe(n));
+  // 창 하나에는 그림이 많아야 20여 개라, 보이는 그림 다음에 나머지도 3개씩 미리 그려 둔다(빨리 내려도 빈 그림이 안 보이게)
+  if(sc) for(let i=0;i<nodes.length;i+=3){const ch=nodes.slice(i,i+3);
+    mmdQ=mmdQ.then(()=>new Promise(r=>setTimeout(r,30))).then(()=>renderMmd(ch.filter(n=>n.isConnected&&!n.dataset.processed)))}
 }
 let mmdIO=null,mmdQ=Promise.resolve();
 async function renderMmd(nodes){
@@ -1142,7 +1158,6 @@ function findSet(pid,q){
   const pg=cache[pid];if(!pg) return null;const k=s=>s.title.replace(/\s/g,'');
   return pg.sets.find(s=>k(s)===q)||pg.sets.find(s=>k(s).startsWith(q))||pg.sets.find(s=>k(s).includes(q))||null;
 }
-let planIO=null,tblIO=null;
 async function showPlan(){
   renderSide('plan');toc.innerHTML='';skel();
   let md;
@@ -1162,48 +1177,54 @@ async function showPlan(){
     a.outerHTML=`<button type="button" class="pk ${tier}" data-p="${pid}" data-n="${s.num}" aria-expanded="false">${esc(t)}${s.rounds.length?`<em>${s.rounds.length}</em>`:''}</button>`;
   });
   enhanceBody(body);
-  // 표마다 그 표에 든 묶음을 표 순서대로 바로 밑에 이어 붙인다
-  body.querySelectorAll('.tbl').forEach(w=>{
-    const bs=[...w.querySelectorAll('button.pk')];if(!bs.length) return;
-    const h=w.previousElementSibling&&w.previousElementSibling.tagName==='H2'?w.previousElementSibling:null;
-    let at=w;const seen=new Set();
-    bs.forEach(btn=>{
-      const pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],key=s.id;
-      btn.dataset.to='pk-'+key;if(seen.has(key)) return;seen.add(key);
-      const sec=pg.bodyEl.children[s.num-1],el=document.createElement('section');
-      el.className='pk-set';el.id='pk-'+key;
-      el.innerHTML=`<div class="pk-h"><small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b></div><div class="pk-b"></div><button type="button" class="pk-up">↑ ${h?esc(h.textContent)+' 표로':'표로'}</button>`;
-      const pb=el.querySelector('.pk-b');['.meta','.kvs','.prose'].forEach(c=>pb.appendChild(sec.querySelector(c).cloneNode(true)));
-      at.after(el);at=el;el._tbl=w;
-    });
-  });
+  const order=[...body.querySelectorAll('button.pk')].filter((b,i,a)=>a.findIndex(x=>x.dataset.p===b.dataset.p&&x.dataset.n===b.dataset.n)===i);
   main.innerHTML=hero('정보처리기사 실기',title,'<span>⭐ 핵심</span><span>🔥 보조</span><span>🤔 후순위</span><span>숫자 = 기출 횟수</span>')+'<div class="post"></div>';
   main.querySelector('.post').appendChild(body);
   finishBody(body);
-  // 해시를 바꾸면 라우터가 다른 화면으로 보내므로, 항목 이동은 해시 없이 스크롤로 한다
   body.addEventListener('click',e=>{
     if(codeClick(e)) return;
-    const b=e.target.closest('button.pk');if(b){document.getElementById(b.dataset.to).scrollIntoView();return}
-    const u=e.target.closest('.pk-up');if(u){const t=u.closest('.pk-set')._tbl;(t.previousElementSibling||t).scrollIntoView()}
+    const b=e.target.closest('button.pk');if(b) openPk(order,order.findIndex(x=>x.dataset.p===b.dataset.p&&x.dataset.n===b.dataset.n));
   });
-  // 개념을 읽는 중이면 끝까지 안 내려가도 표로 돌아갈 수 있게 떠 있는 버튼을 둔다
-  const fab=document.createElement('button');fab.type='button';fab.className='pk-fab';fab.hidden=true;main.appendChild(fab);
-  let cur=null;const tv=new Set();  // tv: 지금 화면에 보이는 표. 표가 보이면 버튼은 필요 없다
-  planIO&&planIO.disconnect();
-  const onIO=es=>{
-    es.forEach(e=>{if(e.target.classList.contains('tbl')){e.isIntersecting?tv.add(e.target):tv.delete(e.target);return}
-      if(e.isIntersecting)cur=e.target;else if(cur===e.target)cur=null});
-    fab.hidden=!cur||tv.has(cur._tbl);if(fab.hidden) return;
-    const h=cur._tbl.previousElementSibling;fab.innerHTML=`↑ ${h&&h.tagName==='H2'?esc(h.textContent)+' 표로':'표로'}<small>${esc(cur.querySelector('.pk-h b').textContent)}</small>`;fab._set=cur;
-  };
-  planIO=new IntersectionObserver(onIO,{rootMargin:'-45% 0px -45% 0px'});
-  tblIO&&tblIO.disconnect();tblIO=new IntersectionObserver(onIO);
-  body.querySelectorAll('.pk-set').forEach(el=>{planIO.observe(el);tblIO.observe(el._tbl)});
-  fab.addEventListener('click',()=>{const t=fab._set&&fab._set._tbl;if(t)(t.previousElementSibling||t).scrollIntoView()});
   toc.innerHTML='<h5>압축 공부법</h5>'+[...body.querySelectorAll('h2.sec-t')].map((h,i)=>`<a href="#plan" data-i="${i}">${esc(h.textContent)}</a>`).join('');
   toc.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();body.querySelectorAll('h2.sec-t')[+a.dataset.i].scrollIntoView()}));
   window.scrollTo(0,0);
 }
+
+/* 압축 공부법의 개념 창: <dialog>로 띄운다(Esc·포커스 가두기는 브라우저가 한다). 바깥·✕·뒤로 가기로 닫고, 이전/다음으로 표 순서대로 넘긴다 */
+function pkDlg(){
+  let d=document.getElementById('pkDlg');if(d) return d;
+  d=document.createElement('dialog');d.id='pkDlg';d.className='pk-dlg';
+  d.innerHTML='<div class="pk-dlg-h"><div class="pk-h"></div><button type="button" class="pk-x" aria-label="닫기">✕</button></div><div class="pk-dlg-b"></div><div class="pk-dlg-f"><button type="button" class="pk-nav" data-d="-1"></button><button type="button" class="pk-nav" data-d="1"></button></div>';
+  document.body.appendChild(d);
+  d.addEventListener('click',e=>{
+    if(e.target===d||e.target.closest('.pk-x')) return closePk();   // e.target===d: 창 바깥(backdrop)을 누름
+    const n=e.target.closest('.pk-nav');if(n&&!n.disabled) return openPk(d._order,d._i+ +n.dataset.d);
+    codeClick(e);
+  });
+  d.addEventListener('cancel',e=>{e.preventDefault();closePk()});   // Esc
+  d.addEventListener('close',()=>document.documentElement.classList.remove('dlg-open'));
+  // 폰의 뒤로 가기로 닫히도록 창을 열 때 기록을 하나 쌓는다. 주소는 그대로라 라우터(hashchange)는 움직이지 않는다
+  addEventListener('popstate',()=>{if(d.open){d._pushed=false;d.close()}});
+  return d;
+}
+function openPk(order,i){
+  const btn=order[i];if(!btn) return;
+  const d=pkDlg(),pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],sec=pg.bodyEl.children[s.num-1];
+  d._order=order;d._i=i;
+  d.querySelector('.pk-h').innerHTML=`<small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b>`;
+  const old=d.querySelector('.pk-dlg-b');old._io&&old._io.disconnect();
+  const sc=document.createElement('div');sc.className='pk-dlg-b';old.replaceWith(sc);
+  const pb=document.createElement('div');pb.className='pk-b';sc.appendChild(pb);
+  ['.meta','.kvs','.prose'].forEach(c=>{const x=sec.querySelector(c);if(x)pb.appendChild(x.cloneNode(true))});
+  const [pv,nx]=d.querySelectorAll('.pk-nav'),lb=b=>b?b.textContent.replace(/\d+$/,'').replace(/^[⭐🔥🤔]\s*/u,''):'';
+  pv.disabled=!order[i-1];pv.textContent=order[i-1]?'← '+lb(order[i-1]):'처음';
+  nx.disabled=!order[i+1];nx.textContent=order[i+1]?lb(order[i+1])+' →':'마지막';
+  order.forEach(b=>b.classList.toggle('on',b.dataset.p===pid&&b.dataset.n===btn.dataset.n));
+  if(!d.open){d.showModal();document.documentElement.classList.add('dlg-open');if(!d._pushed){history.pushState({pk:1},'');d._pushed=true}}
+  finishBody(pb);   // 표 너비 계산이 있어 창이 화면에 뜬 뒤에 한다
+  sc.scrollTop=0;sc.focus({preventScroll:true});
+}
+function closePk(){const d=document.getElementById('pkDlg');if(!d||!d.open) return;if(d._pushed){history.back();return}d.close()}
 
 /* 라우팅: #영역 = 목차, #영역-sN = 묶음 한 개 */
 function route(){const h=(location.hash||'#home').slice(1);closeSide();if(!h||h==='home')return showHome();if(h==='plan')return showPlan();const m=h.match(/^([a-z-]+?)(?:-s(\d+))?$/);if(m&&byId[m[1]])return m[2]?showSet(m[1],+m[2]):showArea(m[1]);showHome()}
