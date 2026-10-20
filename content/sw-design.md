@@ -926,7 +926,9 @@ TV 리모컨의 채널 버튼을 생각하면 쉽다. "다음" 버튼만 누르�
 - ㄷ. 우연
 - ㄹ. 시간
 
-정답: 기능 또는 기능적 또는 Functional 또는 ㄱ → 교환 또는 통신적 또는 Communicational 또는 ㄴ → 시간 또는 시간적 또는 Temporal 또는 ㄹ → 우연 또는 우연적 또는 Coincidental 또는 ㄷ
+정답: ㄱ → ㄴ → ㄹ → ㄷ 또는 기능 → 교환 → 시간 → 우연
+
+기능적(Functional) → 교환적(통신적, Communicational) → 시간적(Temporal) → 우연적(Coincidental) 순이다.
 :::
 
 :::q 21-3 17번

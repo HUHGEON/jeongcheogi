@@ -238,6 +238,28 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .qz-h{display:inline-block;font-size:12.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 10px;margin-bottom:8px}
 .qz>p,.qz li{font-size:15.5px}
 .qz-b{border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:6px 14px;cursor:pointer}
+.qz-in{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:12px 0 10px}
+.qz-f{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line-2);border-radius:8px;padding:0 0 0 10px;background:var(--bg);transition:border-color .15s}
+.qz-f:focus-within{border-color:var(--accent)}
+.qz-f span{flex:none;font-size:13.5px;font-weight:800;color:var(--accent-ink);white-space:nowrap}
+.qz-f input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);padding:9px 10px 9px 0;outline:0}
+.qz-f.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--bg))}
+.qz-f.no{border-color:#d9534f;background:color-mix(in srgb,#d9534f 8%,var(--bg))}
+.qz-f.ok span{color:var(--ok)}
+.qz-f.no span{color:#d9534f}
+.qz-f.ok span::after{content:' ✓';color:var(--ok)}
+.qz-f.no span::after{content:' ✗';color:#d9534f}
+.qz-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.qz-c{border:1px solid var(--ink);background:var(--ink);color:var(--bg);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:6px 16px;cursor:pointer}
+.qz-c:active,.qz-b:active{transform:translateY(1px)}
+.qz-r{font-size:14px;font-weight:800}
+.qz-r.ok{color:var(--ok)}
+.qz-r.no{color:#d9534f}
+.pk-fab{position:fixed;right:20px;bottom:24px;z-index:45;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 40px);border:1px solid var(--accent);background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;border-radius:999px;padding:10px 16px;box-shadow:0 6px 20px rgba(20,25,40,.2);cursor:pointer;transition:opacity .2s,transform .2s}
+.pk-fab small{font-weight:400;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+.pk-fab[hidden]{display:flex;opacity:0;transform:translateY(12px);pointer-events:none}
+@media (max-width:960px){.pk-fab{right:14px;bottom:calc(var(--tab) + env(safe-area-inset-bottom,0px) + 12px)}}
+@media (max-width:640px){.pk-fab small{display:none}}
 .qz-a{margin-top:10px;padding:10px 14px 2px;border-left:3px solid var(--accent);background:var(--bg-2);border-radius:0 8px 8px 0}
 .qz-a p:first-child{font-weight:800;color:var(--ink)}
 .plan-cta{display:block;padding:16px 18px;margin:0 0 8px;border:1.5px solid var(--accent-line);border-radius:12px;background:var(--accent-soft)}
@@ -752,9 +774,11 @@ function enhanceBody(body){
   body.querySelectorAll('.qz').forEach(q=>{
     q.insertAdjacentHTML('afterbegin',`<div class="qz-h">기출 ${esc(q.dataset.r)}</div>`);
     const a=[...q.children].find(x=>x.tagName==='P'&&/^정답\s*[:：]/.test(x.textContent.trim())); if(!a) return;
+    const parts=qzParts(a.textContent.trim().split('\n')[0].replace(/^정답\s*[:：]\s*/,''));
     const box=document.createElement('div');box.className='qz-a';box.hidden=true;
     let n=a;while(n){const nx=n.nextElementSibling;box.appendChild(n);n=nx}
-    q.insertAdjacentHTML('beforeend','<button type="button" class="qz-b" aria-expanded="false">정답 보기</button>');q.appendChild(box);
+    q.dataset.k=JSON.stringify(parts.map(p=>p.alts));
+    q.insertAdjacentHTML('beforeend',`<div class="qz-in">${parts.map((p,i)=>`<label class="qz-f"><span>${esc(p.lb||'답')}</span><input type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="${i<parts.length-1?'next':'done'}"></label>`).join('')}</div><div class="qz-act"><button type="button" class="qz-c">채점</button><button type="button" class="qz-b" aria-expanded="false">정답 보기</button><span class="qz-r" aria-live="polite"></span></div>`);q.appendChild(box);
   });
   // 소제목 아래를 안내 상자로
   [...body.querySelectorAll(':scope > h3')].forEach(h=>{
@@ -1118,6 +1142,7 @@ function findSet(pid,q){
   const pg=cache[pid];if(!pg) return null;const k=s=>s.title.replace(/\s/g,'');
   return pg.sets.find(s=>k(s)===q)||pg.sets.find(s=>k(s).startsWith(q))||pg.sets.find(s=>k(s).includes(q))||null;
 }
+let planIO=null,tblIO=null;
 async function showPlan(){
   renderSide('plan');toc.innerHTML='';skel();
   let md;
@@ -1161,6 +1186,20 @@ async function showPlan(){
     const b=e.target.closest('button.pk');if(b){document.getElementById(b.dataset.to).scrollIntoView();return}
     const u=e.target.closest('.pk-up');if(u){const t=u.closest('.pk-set')._tbl;(t.previousElementSibling||t).scrollIntoView()}
   });
+  // 개념을 읽는 중이면 끝까지 안 내려가도 표로 돌아갈 수 있게 떠 있는 버튼을 둔다
+  const fab=document.createElement('button');fab.type='button';fab.className='pk-fab';fab.hidden=true;main.appendChild(fab);
+  let cur=null;const tv=new Set();  // tv: 지금 화면에 보이는 표. 표가 보이면 버튼은 필요 없다
+  planIO&&planIO.disconnect();
+  const onIO=es=>{
+    es.forEach(e=>{if(e.target.classList.contains('tbl')){e.isIntersecting?tv.add(e.target):tv.delete(e.target);return}
+      if(e.isIntersecting)cur=e.target;else if(cur===e.target)cur=null});
+    fab.hidden=!cur||tv.has(cur._tbl);if(fab.hidden) return;
+    const h=cur._tbl.previousElementSibling;fab.innerHTML=`↑ ${h&&h.tagName==='H2'?esc(h.textContent)+' 표로':'표로'}<small>${esc(cur.querySelector('.pk-h b').textContent)}</small>`;fab._set=cur;
+  };
+  planIO=new IntersectionObserver(onIO,{rootMargin:'-45% 0px -45% 0px'});
+  tblIO&&tblIO.disconnect();tblIO=new IntersectionObserver(onIO);
+  body.querySelectorAll('.pk-set').forEach(el=>{planIO.observe(el);tblIO.observe(el._tbl)});
+  fab.addEventListener('click',()=>{const t=fab._set&&fab._set._tbl;if(t)(t.previousElementSibling||t).scrollIntoView()});
   toc.innerHTML='<h5>압축 공부법</h5>'+[...body.querySelectorAll('h2.sec-t')].map((h,i)=>`<a href="#plan" data-i="${i}">${esc(h.textContent)}</a>`).join('');
   toc.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();body.querySelectorAll('h2.sec-t')[+a.dataset.i].scrollIntoView()}));
   window.scrollTo(0,0);
@@ -1207,7 +1246,32 @@ async function doSearch(){
   res.innerHTML=hits.slice(0,30).map(({s,p,ix})=>{const sn=ix>=0?s.text.slice(Math.max(0,ix-50),ix+90):s.text.slice(0,120);
     return `<a href="#${s.id}"><div class="p">${p.title}${s.rounds.length?` · 기출 ${s.rounds.length}회`:''}</div><div class="t">${esc(s.title).replace(re,m=>`<mark>${m}</mark>`)}</div><div class="s">${esc(sn).replace(re,m=>`<mark>${m}</mark>`)}</div></a>`}).join('');
 }
-document.addEventListener('click',e=>{const b=e.target.closest('.qz-b');if(!b)return;const a=b.nextElementSibling,open=a.hidden;a.hidden=!open;b.textContent=open?'정답 숨기기':'정답 보기';b.setAttribute('aria-expanded',open)});
+/* 기출 카드 채점: "정답:" 줄을 칸별(①·(1)·a: …)로 나누고, 칸마다 "또는"으로 이은 답 중 하나와 같으면 맞음 */
+const QZ_LB=/(?:^|\s)(?:\/\s*)?(?:([①-⑳])\s*[:：]?|(\(\d{1,2}\)|노드 \d+|Fan-(?:in|out)|문장 커버리지 순서|\d{1,2}|[A-Za-z])\s*[:：])\s*/g;
+function qzParts(raw){
+  const ms=[...raw.matchAll(QZ_LB)];
+  if(!ms.length||ms[0].index!==0) return [{lb:'',alts:qzAlts(raw)}];
+  return ms.map((m,i)=>({lb:m[1]||m[2],alts:qzAlts(raw.slice(m.index+m[0].length,i+1<ms.length?ms[i+1].index:raw.length))}));
+}
+function qzAlts(v){return v.replace(/\s*\/\s*$/,'').split(/\s+또는\s+/).map(x=>x.trim()).filter(Boolean)}
+const qzN=v=>v.toLowerCase().replace(/->|=>|[,>]/g,'→').replace(/[\s'"`]/g,'').replace(/[;.]+$/,'');
+function qzShow(q,open){const a=q.querySelector('.qz-a'),b=q.querySelector('.qz-b');if(!a)return;a.hidden=!open;b.textContent=open?'정답 숨기기':'정답 보기';b.setAttribute('aria-expanded',open)}
+function qzGrade(q){
+  const k=JSON.parse(q.dataset.k||'[]'),fs=[...q.querySelectorAll('.qz-f')];let ok=0;
+  fs.forEach((f,i)=>{const v=f.querySelector('input').value,c=[qzN(v),qzN(v.replace(/\(.*?\)/g,''))];
+    const hit=!!v.trim()&&(k[i]||[]).some(a=>c.includes(qzN(a)));if(hit)ok++;f.classList.toggle('ok',hit);f.classList.toggle('no',!hit)});
+  const r=q.querySelector('.qz-r');r.textContent=ok===fs.length?'다 맞았어요':`${fs.length}칸 중 ${ok}칸 맞음`;r.className='qz-r '+(ok===fs.length?'ok':'no');
+  qzShow(q,true);
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.qz-c');if(c)return qzGrade(c.closest('.qz'));
+  const b=e.target.closest('.qz-b');if(b){const q=b.closest('.qz');qzShow(q,q.querySelector('.qz-a').hidden)}
+});
+document.addEventListener('keydown',e=>{
+  const i=e.target.closest&&e.target.closest('.qz-f input');if(!i||e.key!=='Enter'||e.isComposing)return;e.preventDefault();
+  const q=i.closest('.qz'),all=[...q.querySelectorAll('.qz-f input')],nx=all[all.indexOf(i)+1];nx?nx.focus():qzGrade(q);
+});
+document.addEventListener('input',e=>{const f=e.target.closest&&e.target.closest('.qz-f');if(f)f.classList.remove('ok','no')});
 route();
 // 사이드바의 영역별 묶음 수는 그 영역을 받아야 알 수 있다. 첫 화면을 띄운 뒤 나머지 영역도 받아 두고 사이드바를 다시 그린다
 Promise.allSettled(PAGES.map(p=>load(p.id))).then(()=>renderSide(sideActive,sideCur));
