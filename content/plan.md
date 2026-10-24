@@ -145,16 +145,22 @@ INTO·SET·CHECK처럼 빈칸으로 나오는 예약어가 어느 문장에 붙�
 |---|---|---|---|
 | 조회 | `SELECT 컬럼 FROM 테이블 WHERE 조건 GROUP BY 컬럼 HAVING 집계조건 ORDER BY 컬럼 DESC` | **WHERE**는 행 조건, **HAVING**은 GROUP BY로 묶은 뒤 집계 조건(COUNT·SUM 등)<br>오름차순 **ASC**(생략 가능), 내림차순 **DESC** | [자세히](@sql/키워드빈칸:SELECT) |
 | 조건 | `LIKE '이%'` · `IN ('컴공','전자')` · `BETWEEN 70 AND 85` · `IS NULL` · `DISTINCT` | **LIKE**: %는 여러 글자, _는 한 글자<br>**BETWEEN**은 양 끝 포함<br>NULL은 `= NULL`이 아니라 **IS NULL** | [자세히](@sql/키워드빈칸:SELECT) |
+| 별칭·조인 | `SUM(급여) AS 합계` · `사원 JOIN 부서 ON 사원.부서번호 = 부서.부서번호` · `JOIN 부서 USING (부서번호)` · `NATURAL JOIN 부서` | **AS**는 생략 가능<br>**ON**: 조인 조건을 직접 씀<br>**USING**: 이름이 같은 컬럼 중 조인할 컬럼만 지정<br>**NATURAL JOIN**: 같은 이름 컬럼으로 자동 동등 조인, 그 컬럼은 한 번만 나옴 | [자세히](@sql/조인·서브쿼리·집합) |
+| 서브쿼리 비교 | `급여 > ALL (SELECT …)` · `급여 > ANY (SELECT …)` · `WHERE EXISTS (SELECT …)` | **ALL**: 모두보다 → 최댓값과 비교<br>**ANY**(=SOME): 하나보다만 → 최솟값과 비교<br>`IN`은 `= ANY`, `NOT IN`은 `<> ALL`<br>**EXISTS**: 값 비교 없이 행이 하나라도 있는지만 | [자세히](@sql/키워드빈칸:SELECT) |
+| 집합 연산 | `SELECT … UNION SELECT …` · `UNION ALL` · `INTERSECT` · `EXCEPT` | **UNION**: 합치고 중복 제거, **UNION ALL**: 중복 남김<br>**INTERSECT**: 양쪽에 다 있는 행<br>**EXCEPT**: 앞에만 있는 행(Oracle은 MINUS)<br>ORDER BY는 맨 뒤에 한 번, 전체에 적용 | [자세히](@sql/조인·서브쿼리·집합) |
 | 삽입 | `INSERT INTO 교수(교수번호, 이름) VALUES (1, '김교수')` | **INTO** + **VALUES**는 삽입에만<br>VALUES 대신 SELECT를 쓰면 조회 결과를 통째로 삽입 | [자세히](@sql/키워드빈칸:INSERT) |
 | 수정 | `UPDATE 교수 SET 나이 = 46 WHERE 교수번호 = 1` | **SET**은 수정, FROM을 쓰지 않는다<br>WHERE가 없으면 전체 행이 바뀐다 | [자세히](@sql/키워드빈칸:INSERT) |
 | 삭제(행) | `DELETE FROM 교수 WHERE 교수번호 = 3` | **DELETE FROM**: 컬럼 이름을 안 쓴다, 행만 지우고 테이블은 남는다(DML)<br>테이블째 없애는 건 **DROP**(DDL) | [자세히](@sql/키워드빈칸:INSERT) |
 | 테이블 생성·제약조건 | `CREATE TABLE 교수( 교수번호 INT PRIMARY KEY, 이름 TEXT NOT NULL, 이메일 TEXT UNIQUE, 나이 INT CHECK (나이 >= 20), 학과코드 TEXT DEFAULT 'D1', CONSTRAINT fk FOREIGN KEY (학과코드) REFERENCES 학과(학과코드) ON DELETE SET NULL )` | **PRIMARY KEY**: NULL·중복 불가<br>**NOT NULL**: 비울 수 없음<br>**UNIQUE**: 중복만 막고 NULL 허용<br>**CHECK**: 값이 조건식을 만족해야 함<br>**DEFAULT**: 값을 안 주면 넣을 기본값<br>**FOREIGN KEY (컬럼) REFERENCES 부모(컬럼)** 순서 | [자세히](@sql/키워드빈칸:DDL) |
+| CONSTRAINT (제약조건 이름 붙이기) | `CONSTRAINT fk_학과 FOREIGN KEY (학과코드) REFERENCES 학과(학과코드)` · `CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CONSTRAINT 이름** 뒤에 제약조건(FOREIGN KEY·CHECK 등)을 쓴다<br>REFERENCES 뒤에는 부모 **테이블명**, 괄호 안에 부모 **컬럼**<br>26-1에 외래키 문장이 5칸 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
+| 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CREATE DOMAIN**: 값의 범위에 이름을 붙임<br>허용 값은 **CHECK (VALUE IN …)**, 26-2에 CHECK 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
 | 부모 삭제 시 | `ON DELETE CASCADE` · `ON DELETE SET NULL` · `ON DELETE SET DEFAULT` · `ON DELETE RESTRICT` | **CASCADE**: 자식 행도 같이 삭제<br>**SET NULL**: 자식 외래키를 NULL로<br>**SET DEFAULT**: 자식 외래키를 기본값으로<br>**RESTRICT**: 자식이 있으면 삭제 거부 | [자세히](@sql/결과예측:DISTINCT) |
 | 테이블 변경 | `ALTER TABLE 교수 ADD 전화 TEXT` · `ALTER TABLE 교수 DROP COLUMN 전화` · `ALTER TABLE 교수 MODIFY 나이 INT` | 컬럼 추가 **ADD**, 컬럼 삭제 **DROP COLUMN**<br>자료형 변경 **MODIFY**(Oracle·MySQL), 표준은 `ALTER 나이 SET DATA TYPE INT` | [자세히](@sql/키워드빈칸:DDL) |
 | 삭제(객체) | `DROP TABLE 교수 CASCADE` · `DROP VIEW 고령교수` · `DROP INDEX idx_교수_이름` | **CASCADE**: 참조하는 객체까지 함께 삭제, **RESTRICT**: 참조가 있으면 거부<br>**TRUNCATE**는 행을 다 지우지만 분류는 DDL | [자세히](@sql/키워드빈칸:DDL) |
 | 뷰·인덱스 | `CREATE VIEW 고령교수 AS SELECT 이름 FROM 교수 WHERE 나이 >= 45` · `CREATE INDEX idx_교수_이름 ON 교수(이름)` | 뷰는 **AS** + SELECT, 인덱스는 **ON** 테이블(컬럼)<br>뷰는 ALTER로 못 바꾼다 → DROP 뒤 다시 CREATE | [자세히](@sql/뷰·인덱스) |
 | 권한 부여 | `GRANT SELECT ON 학생 TO USER1 WITH GRANT OPTION` | **GRANT … ON … TO**<br>**WITH GRANT OPTION**: 받은 권한을 남에게 다시 줄 수 있음 | [자세히](@sql/키워드빈칸:DCL) |
 | 권한 회수 | `REVOKE UPDATE ON 학생 FROM USER1 CASCADE` | **REVOKE … ON … FROM** (GRANT는 TO, REVOKE는 FROM)<br>**CASCADE**: USER1이 남에게 준 권한까지 회수 | [자세히](@sql/키워드빈칸:DCL) |
+| 트랜잭션 | `COMMIT` · `ROLLBACK` · `SAVEPOINT sp1` · `ROLLBACK TO sp1` | **COMMIT**: 확정, **ROLLBACK**: 마지막 COMMIT 이후 전부 취소<br>**SAVEPOINT**로 중간 지점을 찍고 **ROLLBACK TO**로 그 지점까지만 취소<br>국내 시험은 COMMIT·ROLLBACK도 DCL로 분류 | [자세히](@sql/뷰·인덱스) |
 
 ### 메모와 다른 점
 
