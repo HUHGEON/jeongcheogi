@@ -274,6 +274,9 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .pk-dlg-h{flex:none;display:flex;align-items:flex-start;gap:12px;padding:16px 16px 10px 26px;border-bottom:1px solid var(--line)}
 .pk-dlg-h .pk-h{flex:1;min-width:0}
 .pk-dlg-h .pk-h b{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.pk-bk{flex:none;align-self:center;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;border-radius:8px;padding:6px 10px;cursor:pointer;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-go{border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:13px;font-weight:700;border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.pk-go:hover{border-color:var(--accent)}
 .pk-x{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:var(--bg-2);color:var(--ink);font-size:17px;cursor:pointer}
 .pk-x:hover{background:var(--line)}
 .pk-dlg-b{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:14px 26px 30px;outline:0}
@@ -1168,7 +1171,11 @@ async function showPlan(){
     md=await r.text();
   }catch(e){main.innerHTML=`<div class="post"><div class="err">${esc(e.message)}</div></div>`;return}
   renderSide('plan');
+  // ":::m 아이디 제목 … :::m-end" 는 본문에 안 보이고, [이름](#m/아이디) 단추를 누르면 창으로 열린다
+  const mods={};md=md.replace(/^:::m (\S+) (.+)\n([\s\S]*?)\n:::m-end$/gm,(_,id,t,src)=>{mods[id]={t:t.trim(),src};return ''});
   const body=document.createElement('div');body.className='prose plan';body.innerHTML=marked.parse(preprocess(md));
+  body.querySelectorAll('a[href^="#m/"]').forEach(a=>{const id=a.getAttribute('href').slice(3);if(!mods[id])return;
+    a.outerHTML=`<button type="button" class="pk t1 pm" data-m="${esc(id)}">${esc(a.textContent.trim())}</button>`});
   const h1=body.querySelector('h1');const title=h1?h1.textContent.trim():'압축 공부법';if(h1)h1.remove();
   body.querySelectorAll('h2').forEach(h=>h.className='sec-t');
   body.querySelectorAll('a[href^="@"]').forEach(a=>{
@@ -1184,6 +1191,7 @@ async function showPlan(){
   finishBody(body);
   body.addEventListener('click',e=>{
     if(codeClick(e)) return;
+    const m=e.target.closest('button.pm');if(m) return openPm(mods[m.dataset.m]);
     const b=e.target.closest('button.pk');if(b) openPk(order,order.findIndex(x=>x.dataset.p===b.dataset.p&&x.dataset.n===b.dataset.n));
   });
   toc.innerHTML='<h5>압축 공부법</h5>'+[...body.querySelectorAll('h2.sec-t')].map((h,i)=>`<a href="#plan" data-i="${i}">${esc(h.textContent)}</a>`).join('');
@@ -1195,11 +1203,13 @@ async function showPlan(){
 function pkDlg(){
   let d=document.getElementById('pkDlg');if(d) return d;
   d=document.createElement('dialog');d.id='pkDlg';d.className='pk-dlg';
-  d.innerHTML='<div class="pk-dlg-h"><div class="pk-h"></div><button type="button" class="pk-x" aria-label="닫기">✕</button></div><div class="pk-dlg-b"></div><div class="pk-dlg-f"><button type="button" class="pk-nav" data-d="-1"></button><button type="button" class="pk-nav" data-d="1"></button></div>';
+  d.innerHTML='<div class="pk-dlg-h"><button type="button" class="pk-bk" hidden>←</button><div class="pk-h"></div><button type="button" class="pk-x" aria-label="닫기">✕</button></div><div class="pk-dlg-b"></div><div class="pk-dlg-f"><button type="button" class="pk-nav" data-d="-1"></button><button type="button" class="pk-nav" data-d="1"></button></div>';
   document.body.appendChild(d);
   d.addEventListener('click',e=>{
     if(e.target===d||e.target.closest('.pk-x')) return closePk();   // e.target===d: 창 바깥(backdrop)을 누름
-    const n=e.target.closest('.pk-nav');if(n&&!n.disabled) return openPk(d._order,d._i+ +n.dataset.d);
+    const n=e.target.closest('.pk-nav');if(n&&!n.disabled) return openPk(d._order,d._i+ +n.dataset.d,d._back);
+    if(e.target.closest('.pk-bk')&&d._back) return d._back();
+    const g=e.target.closest('button.pk-go');if(g){const m=d._pm,top=d.querySelector('.pk-dlg-b').scrollTop;return openPk([g],0,()=>openPm(m,top))}
     codeClick(e);
   });
   d.addEventListener('cancel',e=>{e.preventDefault();closePk()});   // Esc
@@ -1208,22 +1218,41 @@ function pkDlg(){
   addEventListener('popstate',()=>{if(d.open){d._pushed=false;d.close()}});
   return d;
 }
-function openPk(order,i){
+function openPk(order,i,back){
   const btn=order[i];if(!btn) return;
   const d=pkDlg(),pid=btn.dataset.p,pg=cache[pid],s=pg.sets[+btn.dataset.n-1],sec=pg.bodyEl.children[s.num-1];
-  d._order=order;d._i=i;
+  d._order=order;d._i=i;d._back=back||null;pkBk(d);d.querySelector('.pk-dlg-f').hidden=order.length<2;
   d.querySelector('.pk-h').innerHTML=`<small>${esc(byId[pid].title)}</small><b>${esc(s.title)}</b>`;
   const old=d.querySelector('.pk-dlg-b');old._io&&old._io.disconnect();
   const sc=document.createElement('div');sc.className='pk-dlg-b';old.replaceWith(sc);
   const pb=document.createElement('div');pb.className='pk-b';sc.appendChild(pb);
   ['.meta','.kvs','.prose'].forEach(c=>{const x=sec.querySelector(c);if(x)pb.appendChild(x.cloneNode(true))});
-  const [pv,nx]=d.querySelectorAll('.pk-nav'),lb=b=>b?b.textContent.replace(/\d+$/,'').replace(/^[⭐🔥🤔]\s*/u,''):'';
+  const [pv,nx]=d.querySelectorAll('.pk-nav'),lb=b=>b?(b.querySelector('span[hidden]')||b).textContent.replace(/\d+$/,'').replace(/^[⭐🔥🤔]\s*/u,''):'';
   pv.disabled=!order[i-1];pv.textContent=order[i-1]?'← '+lb(order[i-1]):'처음';
   nx.disabled=!order[i+1];nx.textContent=order[i+1]?lb(order[i+1])+' →':'마지막';
   order.forEach(b=>b.classList.toggle('on',b.dataset.p===pid&&b.dataset.n===btn.dataset.n));
-  if(!d.open){d.showModal();document.documentElement.classList.add('dlg-open');if(!d._pushed){history.pushState({pk:1},'');d._pushed=true}}
+  pkShow(d);
   finishBody(pb);   // 표 너비 계산이 있어 창이 화면에 뜬 뒤에 한다
   sc.scrollTop=0;sc.focus({preventScroll:true});
+}
+function pkShow(d){if(!d.open){d.showModal();document.documentElement.classList.add('dlg-open');if(!d._pushed){history.pushState({pk:1},'');d._pushed=true}}}
+function pkBk(d){const b=d.querySelector('.pk-bk');b.hidden=!d._back;if(d._back)b.textContent='← '+d._backT}
+// 모아 보기 창(plan.md 의 :::m 블록). 안의 [자세히](@영역/제목) 는 그 개념을 같은 창에 열고, 머리의 ← 로 목록에 돌아온다
+function openPm(m,top=0){
+  const d=pkDlg();d._back=null;pkBk(d);d.querySelector('.pk-dlg-f').hidden=true;
+  d.querySelector('.pk-h').innerHTML=`<small>압축 공부법</small><b>${esc(m.t)}</b>`;
+  const old=d.querySelector('.pk-dlg-b');old._io&&old._io.disconnect();
+  const sc=document.createElement('div');sc.className='pk-dlg-b';old.replaceWith(sc);
+  const pb=document.createElement('div');pb.className='pk-b prose';pb.innerHTML=marked.parse(preprocess(m.src));sc.appendChild(pb);
+  pb.querySelectorAll('a[href^="@"]').forEach(a=>{
+    const [pid,q]=decodeURIComponent(a.getAttribute('href').slice(1)).split('/'),st=findSet(pid,q);
+    if(!st){console.error('[plan] 묶음을 못 찾음',a.getAttribute('href'));a.replaceWith(a.textContent);return}
+    const row=a.closest('tr'),nm=row?row.cells[0].textContent.trim():st.title;
+    a.outerHTML=`<button type="button" class="pk-go" data-p="${pid}" data-n="${st.num}" title="${esc(st.title)}">${esc(a.textContent)}<span hidden>${esc(nm)}</span></button>`;
+  });
+  enhanceBody(pb);
+  d._pm=m;d._backT=m.t;
+  pkShow(d);finishBody(pb);sc.scrollTop=top;sc.focus({preventScroll:true});
 }
 function closePk(){const d=document.getElementById('pkDlg');if(!d||!d.open) return;if(d._pushed){history.back();return}d.close()}
 
