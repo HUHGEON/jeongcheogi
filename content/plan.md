@@ -68,6 +68,79 @@
 :::m recent 최근 안 나온 개념
 같이 묻거나 서로 헷갈리는 개념끼리는 한 줄로 묶었다. 설명은 이 사이트 개념 페이지의 정리를 옮겼고, 「자세히」를 누르면 그 개념 전체가 열린다.
 
+### DB 이론
+
+| 주제 | 정리 | 구분 포인트 | |
+|---|---|---|---|
+| 관계 대수 · 관계 해석 | **관계 대수**: 절차적 언어, 어떻게(How), 원하는 데이터를 얻는 처리 절차를 기술<br>**관계 해석**(Relational Calculus): 비절차적 언어, 수학의 Predicate Calculus 기반, Codd가 제시, 무엇(What)만 기술, 튜플·도메인 관계 해석 | "비절차적 · Calculus · Codd" → 관계 해석<br>"절차적 · 처리 순서" → 관계 대수<br>SQL도 비절차적 언어 | [자세히](@db/관계대수) |
+| σ(셀렉트) → SQL | **σ**: 조건을 만족하는 튜플(행)만 골라 수평적 부분집합<br>**π**: 지정한 속성(열)만 골라 수직적 부분집합<br>`σ 부서='개발부' ∧ 연봉≥5000 (사원)`<br>= `SELECT * FROM 사원 WHERE 부서='개발부' AND 연봉>=5000` | 괄호 안 릴레이션 → **FROM**<br>σ 아래 조건 → **WHERE**<br>∧ → AND, ∨ → OR<br>π 아래 속성 → SELECT 뒤 컬럼 | [자세히](@db/관계대수) |
+| 개체 · 참조 · 도메인 무결성 | **개체 무결성**: PRIMARY KEY, 기본키는 NULL 불가·릴레이션 안에서 유일<br>**참조 무결성**: FOREIGN KEY, 외래키 값은 참조 릴레이션의 기본키 값이거나 NULL<br>**도메인(속성) 무결성**: DOMAIN·CHECK·DEFAULT, 속성 값은 정의된 도메인(타입·범위)에 속해야 함<br>그 밖에 사용자 무결성(TRIGGER), 키 무결성(UNIQUE) | 기본키가 비었거나 겹침 → 개체<br>부모에 없는 값을 가리킴 → 참조<br>허용 범위 밖 값(성별에 'X') → 도메인 | [자세히](@db/무결성) |
+
+### SQL 키워드
+
+| 문장 | 모양 | 헷갈리는 점 | |
+|---|---|---|---|
+| 조회 · GROUP BY · HAVING | `SELECT 컬럼 FROM 테이블 WHERE 조건 GROUP BY 컬럼 HAVING 집계조건 ORDER BY 컬럼 DESC` | **WHERE**는 행 조건, **HAVING**은 GROUP BY로 묶은 뒤 집계 조건(COUNT·SUM 등)<br>오름차순 **ASC**(생략 가능), 내림차순 **DESC** | [자세히](@sql/키워드빈칸:SELECT) |
+| 조건 · LIKE | `LIKE '이%'` · `IN ('컴공','전자')` · `BETWEEN 70 AND 85` · `IS NULL` · `DISTINCT` | **LIKE**: %는 여러 글자, _는 한 글자, 패턴은 **작은따옴표** `'이%'` 안에<br>**BETWEEN**은 양 끝 포함<br>NULL은 `= NULL`이 아니라 **IS NULL** | [자세히](@sql/키워드빈칸:SELECT) |
+| IN과 CHECK | `WHERE 학과 IN ('컴공','전자')` · `성별 TEXT CHECK (성별 IN ('남','여'))` · `CHECK (VALUE IN ('남','여'))` | **IN**: 조회 조건(WHERE)에서 값 목록 중 하나인지 비교<br>**CHECK**: 테이블·도메인을 만들 때 들어올 값을 제한하는 제약조건, 허용 값 목록은 그 안에 IN으로 쓴다<br>CREATE TABLE·CREATE DOMAIN 안이면 CHECK, SELECT 안이면 IN | [자세히](@sql/키워드빈칸:DDL) |
+| 서브쿼리 ALL · ANY | `급여 > ALL (SELECT …)` · `급여 > ANY (SELECT …)` · `WHERE EXISTS (SELECT …)` | **ALL**: 모두보다 → 최댓값과 비교<br>**ANY**(=SOME): 하나보다만 → 최솟값과 비교<br>`IN`은 `= ANY`, `NOT IN`은 `<> ALL`<br>**EXISTS**: 값 비교 없이 행이 하나라도 있는지만 | [자세히](@sql/키워드빈칸:SELECT) |
+| 수정 | `UPDATE 교수 SET 나이 = 46 WHERE 교수번호 = 1` | 수정은 **UPDATE** 테이블 **SET** 컬럼 = 값<br>WHERE가 없으면 전체 행이 바뀐다 | [자세히](@sql/키워드빈칸:INSERT) |
+| 삭제(행) | `DELETE FROM 교수 WHERE 교수번호 = 3` | **DELETE FROM**: WHERE가 없으면 전체 행 삭제, 테이블은 남는다(DML)<br>테이블째 없애는 건 **DROP**(DDL) | [자세히](@sql/키워드빈칸:INSERT) |
+| 테이블 생성·제약조건 | `CREATE TABLE 교수( 교수번호 INT PRIMARY KEY, 이름 TEXT NOT NULL, 이메일 TEXT UNIQUE, 나이 INT CHECK (나이 >= 20), 학과코드 TEXT DEFAULT 'D1', CONSTRAINT fk FOREIGN KEY (학과코드) REFERENCES 학과(학과코드) ON DELETE SET NULL )` | **PRIMARY KEY**: NULL·중복 불가<br>**NOT NULL**: 비울 수 없음<br>**UNIQUE**: 중복만 막고 NULL 허용<br>**CHECK**: 값이 조건식을 만족해야 함<br>**DEFAULT**: 값을 안 주면 넣을 기본값<br>**FOREIGN KEY (컬럼) REFERENCES 부모(컬럼)** 순서 | [자세히](@sql/키워드빈칸:DDL) |
+| 외래키 · CONSTRAINT | `CONSTRAINT fk_학과 FOREIGN KEY (학과코드) REFERENCES 학과(학과코드)` · `CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CONSTRAINT 이름** 뒤에 제약조건(FOREIGN KEY·CHECK 등)을 쓴다<br>FOREIGN KEY 괄호에는 **내 컬럼**, REFERENCES 뒤에는 부모 **테이블명**, 그 괄호에 부모 **컬럼**<br>26-1에 외래키 문장이 5칸 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
+| 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CREATE DOMAIN**: 값의 범위에 이름을 붙임<br>허용 값은 **CHECK (VALUE IN …)**, 26-2에 CHECK 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
+| 테이블 변경 · 속성 추가 | `ALTER TABLE 교수 ADD 전화 TEXT` · `ALTER TABLE 교수 DROP COLUMN 전화` · `ALTER TABLE 교수 MODIFY 나이 INT` | 컬럼 추가 **ALTER TABLE 테이블 ADD 컬럼 타입**, 컬럼 삭제 **DROP COLUMN**<br>자료형 변경 **MODIFY**(Oracle·MySQL), 표준은 `ALTER 나이 SET DATA TYPE INT` | [자세히](@sql/키워드빈칸:DDL) |
+| 뷰 · 인덱스 생성 | `CREATE VIEW 고령교수 AS SELECT 이름 FROM 교수 WHERE 나이 >= 45` · `CREATE INDEX idx_교수_이름 ON 교수(이름)` | 뷰는 **AS** + SELECT, 인덱스는 **CREATE INDEX 이름 ON 테이블(컬럼)**<br>뷰는 ALTER로 못 바꾼다 → DROP 뒤 다시 CREATE | [자세히](@sql/뷰·인덱스) |
+| 권한 부여 | `GRANT SELECT ON 학생 TO USER1` · `GRANT UPDATE ON 학생 TO USER1 WITH GRANT OPTION` · `GRANT SELECT ON 학생 TO PUBLIC` | 뼈대 **GRANT 권한 ON 테이블 TO 사용자** (무엇을 → 어디에 → 누구에게)<br>권한 자리: SELECT·INSERT·UPDATE·DELETE·ALL, 그 밖에 ALTER·INDEX·REFERENCES·CREATE<br>**TO PUBLIC**: 모든 사용자에게<br>**WITH GRANT OPTION**(문장 끝): 받은 사람이 남에게 다시 줄 수 있음<br>여러 권한을 묶어 그룹에 주는 단위는 **ROLE** | [자세히](@sql/키워드빈칸:DCL) |
+
+### 테스트·설계
+
+| 주제 | 정리 | 구분 포인트 | |
+|---|---|---|---|
+| 블랙박스 테스트 기법 | 내부 구조는 안 보고 **요구사항 명세**만 보고 검사(명세 기반·기능 테스트)<br>**동등 분할**: 입력을 유효/무효 그룹으로 나눠 그룹마다 대표값<br>**상태 전이**: 이벤트에 따라 상태가 바뀌는 전이를 상태 전이도·표로 검사<br>**오류 예측**: 경험과 직관으로 오류 날 만한 곳을 추정, 보완적 역할<br>**원인-결과 그래프**: 입력(원인)과 출력(결과)의 논리 관계를 그래프로, 효용성 높은 케이스 선정<br>**결정 테이블**: 복잡한 논리 조건과 행동을 표로 정리, 규칙 한 열 = 케이스 하나<br>**페어와이즈**: 모든 값 쌍이 한 번 이상 나오게 조합, 조합 폭발 해결<br>**분류 트리**: 입력을 분류와 클래스로 나눠 트리 구조로 정리 후 조합<br>**유스케이스**: 사용자 목표를 이루는 기본·대체·예외 흐름에서 도출 | 대표값 → 동등 분할, 경계 양쪽 값 → 경곗값 분석<br>표 → 결정 테이블, 그래프 → 원인-결과<br>상태·이벤트 → 상태 전이, 사용자 흐름 → 유스케이스<br>경험 → 오류 예측, 값 쌍 → 페어와이즈, 트리 → 분류 트리 | [자세히](@sw-dev/블랙박스) |
+| 테스트 커버리지 | 강도: 구문 < 결정 < 조건 < 조건/결정 < MC/DC<br>**구문(문장)**: 모든 명령문을 한 번 이상 실행<br>**결정(분기)**: 각 결정문 전체가 참/거짓을 한 번 이상<br>**조건**: 결정문 안 각 개별 조건식이 참/거짓을 한 번 이상(전체 결과는 안 봄)<br>**조건/결정**: 결정 + 조건 커버리지를 모두 만족<br>**변경 조건/결정(MC/DC)**: 각 개별 조건식이 다른 조건과 관계없이 전체 결과에 **독립적으로 영향** | 결정문 = `if (x > 0 && y < 10)` 전체<br>조건식 = 그 안의 `x > 0`, `y < 10` 하나하나<br>"독립적" → MC/DC | [자세히](@sw-dev/테스트커버리지) |
+| 럼바우(OMT) | **객체 모델링**(Object): 객체·관계 정의, ER·객체 다이어그램, 정적 구조<br>**동적 모델링**(Dynamic): 시간 흐름·제어 흐름·동작 순서, 상태 다이어그램<br>**기능 모델링**(Functional): 프로세스·자료 흐름·처리 과정, 자료 흐름도(DFD) | 답은 영문으로<br>DFD·자료 흐름 → Functional<br>상태 다이어그램·시간 흐름 → Dynamic<br>ER·객체 관계 → Object | [자세히](@sw-design/럼바우) |
+| UML 구성 · 다이어그램 | **구성 요소**: 사물, 관계, 다이어그램<br>**구조 다이어그램**(정적) 6: 클래스, 객체, 컴포넌트, 배치, 복합체 구조, 패키지<br>**행위 다이어그램**(동적) 6: 유스케이스, 시퀀스, 커뮤니케이션, 상태, 활동, 타이밍 | 두음: 구조 **클객컴배복패**, 행위 **유시커상활타**<br>"객체"는 구조, "상태"는 행위 | [자세히](@sw-design/UML다이어그램) |
+| 응집도 | 높을수록 좋음, 높은 것부터<br>**기능적**: 단일 목적<br>**순차적**: 이전 기능의 출력이 다음 기능의 입력<br>**통신적(교환적)**: 동일한 입력·출력 데이터<br>**절차적**: 입출력 연관은 없으나 순서대로 실행<br>**시간적**: 특정 시간에 함께 실행<br>**논리적**: 유사한 성격, 특정 분류<br>**우연적**: 아무 관련 없음 | 낮은 것부터 **우논시절통순기**<br>출력 → 입력으로 이어짐 → 순차적, 같은 데이터만 씀 → 통신적, 순서만 → 절차적 | [자세히](@sw-design/모듈응집도) |
+| 결합도 | 낮을수록 좋음, 높은 것부터<br>**내용**: 다른 모듈 내부 변수·기능을 직접 사용<br>**공통**: 전역 변수 참조·갱신<br>**외부**: 외부 데이터 형식·통신 프로토콜 공유<br>**제어**: 제어 요소(플래그) 전달<br>**스탬프**: 자료 구조 전달(일부만 사용)<br>**자료**: 최소한의 데이터만 파라미터로 | 높은 것부터 **내공외제스자**<br>응집도는 높을수록, 결합도는 낮을수록 좋다 | [자세히](@sw-design/모듈응집도) |
+| Fan-in · Fan-out | **Fan-in**: 그 모듈을 호출하는 상위 모듈 수 = 들어오는 화살표 수<br>**Fan-out**: 그 모듈이 호출하는 하위 모듈 수 = 나가는 화살표 수 | Fan-in 높음 → 재사용성 높음, 변경 영향 넓음<br>Fan-out 높음 → 책임이 몰림, 분리 검토 | [자세히](@sw-design/Fan-in) |
+
+### 코드·OS
+
+| 주제 | 정리 | 구분 포인트 | |
+|---|---|---|---|
+| Java interface → implements | **인터페이스**: `interface Greet`, 구현은 `implements`(여러 개 가능), 필드는 상수만<br>**추상 클래스**: `abstract class Base`, 상속은 `extends`(하나만)<br>둘 다 `new`로 직접 못 만든다 | interface를 받으면 **implements**, class를 받으면 **extends**<br>25-3 빈칸이 implements | [자세히](@java/추상클래스) |
+| Python 리스트·집합·불리언 | **extend(iter)**: 원소를 풀어 끝에 이어 붙임, 반환 None (`append([7,8])`은 리스트 하나를 원소로)<br>**pop()**: 마지막(pop(i)는 i번째)을 빼고 그 값을 돌려 줌<br>**reverse()**: 원본을 뒤집음, 반환 None (새 리스트는 `a[::-1]`)<br>**{1, 2, 2}**: 집합(set), 중복 제거·순서 없음, 빈 집합은 `set()`(`{}`는 빈 딕셔너리)<br>**True / False**: 첫 글자 대문자 | 값을 돌려주는 건 pop, 나머지는 원본만 바꾸고 None<br>append는 통째로 1개, extend는 풀어서 여러 개 | [자세히](@python/리스트메서드) |
+| CPU 스케줄링 | **비선점형**: FIFO(도착 순서), SJF(실행 시간 짧은 것 먼저), HRN(SJF + 대기 시간), 기한부(마감 임박 먼저), 우선순위(정적 우선순위)<br>**선점형**: RR(FIFO + 시간 할당량), SRT(선점형 SJF, 남은 시간이 더 짧은 프로세스가 오면 빼앗음)<br>**HRN 우선순위** = (대기 시간 + 서비스 시간) / 서비스 시간, 값이 클수록 먼저 | 짧은 것 먼저 + 선점·비선점 둘 다 → SJF, 그중 선점 → SRT<br>시간 할당량 → RR<br>HRN은 오래 기다릴수록 값이 커져 기아 방지 | [자세히](@os/CPU스케줄링) |
+| 페이지 교체 FIFO · LRU · LFU | **FIFO**: 가장 먼저 들어온 페이지<br>**LRU**: 가장 오랫동안 사용되지 않은 페이지(시간 지역성)<br>**LFU**: 참조 횟수가 가장 적은 페이지(참조 빈도) | LRU는 **언제** 마지막으로 썼나, LFU는 **몇 번** 썼나 | [자세히](@os/페이지교체) |
+
+### 프로토콜·라우팅
+
+| 주제 | 정리 | 구분 포인트 | |
+|---|---|---|---|
+| IP · ICMP · IGMP | **IP**: 송신·수신 측 사이 주소 지정과 경로 설정, 비연결성·비신뢰성(신뢰성은 TCP가 담당)<br>**ICMP**: IP 오류 보고·네트워크 상태 진단, Echo Request/Reply → ping 명령어<br>**IGMP**: 멀티캐스트 그룹 관리 | 주소 지정·경로 → IP<br>전송 오류 정보·ping·**Ping of Death**(23-1) → ICMP<br>멀티캐스트 → IGMP | [자세히](@network/네트워크계층) |
+| 프로토콜 3요소 | **구문(Syntax)**: 데이터의 형식·부호화·신호 수준<br>**의미(Semantics)**: 각 비트·필드의 뜻, 제어 정보와 오류 처리<br>**타이밍(Timing)**: 속도 조절과 순서 제어 | 형식 → 구문, 뜻·제어 정보 → 의미, 속도·순서 → 타이밍 | [자세히](@network/프로토콜의정의) |
+| 가상 회선 · 데이터그램 | **가상 회선**: 논리적인 통신 경로를 미리 설정, 연결형 교환 방식<br>**데이터그램**: 비연결형 교환 방식, 순서에 무관하게 독립적으로 전송, 헤더를 붙여 개별 전달 | 가상 회선: 연결 설정 필요, **고정 경로**, 순서 보장<br>데이터그램: 연결 설정 불필요, **패킷마다 경로 다름**, 순서 보장 안 됨 | [자세히](@network/교환방식) |
+| 라우팅 프로토콜 IGP · EGP | **정적**: 고정된 경로 / **동적**: 경로 정보를 주고받아 자동 변경<br>**IGP**(같은 네트워크·AS 안): RIP, OSPF<br>**EGP**(다른 네트워크·AS 사이): BGP<br>**RIP**: 거리 벡터(벨만-포드), 홉 수, 최대 15홉(16홉부터 도달 불가), UDP 520<br>**OSPF**: 링크 상태(다익스트라), 경로 비용, AS를 지역(Area)으로 나눔<br>**BGP**: 경로 벡터, AS 경로와 정책, 처음엔 전체 라우팅 테이블 교환 후 변경분만 | 홉 수 → RIP<br>비용·다익스트라·Area → OSPF<br>AS 경계·경로 벡터 → BGP | [자세히](@network/라우팅) |
+
+### 암호·VPN·공격
+
+| 주제 | 정리 | 구분 포인트 | |
+|---|---|---|---|
+| VPN · IPSec · L2TP | **VPN**: 공중 인터넷 망을 하나의 사설망처럼, SSL 방식과 IPSec 방식<br>**SSL VPN**: 6~7계층, 소프트웨어로 동작, 별도 장치 불필요(24-3 지문)<br>**IPSec**: 3계층(네트워크), 인증 헤더(AH) + 캡슐화(ESP)로 IP 패킷 암호화<br>**L2TP**: L2F + PPTP 결합, 2계층(데이터 링크), 터널링만 → 암호화는 IPSec과 결합(L2TP/IPSec) | SSL **6~7계층**, IPSec **3계층**, L2TP **2계층**<br>지문에 "L2F + PPTP"가 보이면 L2TP<br>AH: 무결성·송신자 인증, 암호화 없음 / ESP: 암호화로 기밀성 | [자세히](@sw-dev/인터페이스보안) |
+| IPSec 전송 · 터널 모드 | **전송 모드**: IP 페이로드만 보호, 기존 IP 헤더 그대로, 호스트 간(End-to-End) 통신<br>**터널 모드**: IP 패킷 전체를 보호, 새 IP 헤더를 붙임, VPN 게이트웨이 간 통신 | 헤더는 두고 데이터만 → 전송<br>패킷 통째로 감싸 새 헤더 → 터널 | [자세히](@sw-dev/IPSec) |
+| 대칭키 · 비대칭키 | **대칭키**(같은 키, 빠름): DES(IBM, 56비트 키, 64비트 블록, 최초 표준, 현재 취약), AES(DES 한계 극복, NIST, 128비트 블록), ARIA(국내 국가 표준), SEED(KISA, 128비트)<br>**비대칭키**(공개키·개인키, 느림): RSA(소인수분해), 디피-헬만(키 교환, 이산 로그, 최초 공개키), ECC(타원곡선 이산 로그, 짧은 키) | 소인수분해 → RSA, 이산 로그 → 디피-헬만, 타원곡선 → ECC<br>AES·ARIA는 숫자가 같으니 NIST → AES, 국내 국가 표준 → ARIA | [자세히](@security/암호알고리즘) |
+| IDEA · Skipjack | **IDEA**: 초기 블록 암호화, 스위스 개발, 128비트 키, 64비트 블록, 8라운드<br>**Skipjack**: NSA 개발, 음성 암호화(전화기), 80비트 키, 64비트 입출력 | 스위스·128비트 키·8라운드 → IDEA<br>NSA·음성·80비트 키 → Skipjack (22-2에 한 문제로) | [자세히](@security/암호알고리즘) |
+| 해시 · MD5 · SHA-2 · TKIP | **해시 함수**: 단방향 함수, 고정 길이 해시값, 복호화 불가 → 무결성 검증·패스워드 저장<br>**MD5**: RFC 1321, 128비트 해시값, MD4 대체, 현재 충돌 취약<br>**SHA-2**: 256/384/512비트, 안전, 널리 사용<br>**TKIP**: WEP 보완, 패킷별 키 믹싱, MIC 적용, 무선랜 보안 프로토콜 | 되돌릴 수 없음 → 해시<br>RFC 1321·128비트 → MD5<br>WEP 보완·무선랜 → TKIP | [자세히](@security/해시) |
+| Kerberos · OAuth | **Kerberos**: 티켓 기반 상호 인증, KDC(AS + TGS), AS가 TGT 발급 → TGS가 서비스 티켓 발급, 대칭키, 시간 동기화 필요<br>**OAuth**: 비밀번호를 넘기지 않고 접근 권한을 위임하는 개방형 표준, Access Token, 소셜 로그인 | 목적으로 가른다: Kerberos는 **인증**, OAuth만 **권한 부여** | [자세히](@security/인증기술) |
+| SIEM | 보안 장비·서버·애플리케이션의 로그와 이벤트를 한곳에 모아 상관 분석 (22-3: 머신러닝·대량 로그 통합 분석) | 로그를 **모아서 본다**(탐지), 자동 대응은 SOAR | [자세히](@security/보안솔루션) |
+| APT | 지능형 지속 위협, 특정 표적을 오래 은밀히 침투, 제로데이·악성코드·사회공학 조합 |  | [자세히](@security/사회공학) |
+| TrustZone · 타이포스쿼팅 | **TrustZone**: ARM 프로세서가 하드웨어로 일반 영역과 보안 영역 분리<br>**타이포스쿼팅**: 주소 오타를 노려 비슷한 도메인을 미리 등록, URL 하이재킹 | TrustZone은 **하드웨어** 보안 기술<br>타이포스쿼팅은 **사용자 오타**를 노림 → DNS를 조작하면 파밍 | [자세히](@security/보안신기술) |
+| 심볼릭 링크 · 루트킷 · 백도어 | **심볼릭 링크**: 다른 파일·디렉터리의 경로를 가리키는 작은 파일, 레이스 컨디션(TOCTOU)에서 임시 파일 자리에 `/etc/passwd`를 가리키는 링크를 만들어 악용(26-1)<br>**루트킷**: root 권한 유지 + 자기 존재 은폐 도구 묶음, ps·ls·netstat 결과 변조(24-1)<br>**백도어**: 정상 인증을 우회해 드나드는 은밀한 통로 | 링크로 엉뚱한 파일을 건드리게 → 심볼릭 링크<br>숨으면서 root 유지 → 루트킷<br>인증 우회 통로 자체 → 백도어 | [자세히](@security/시스템공격) |
+| 악성 코드 | **바이러스**: 프로그램을 변형해 감염, 자가 복제, 자율 전파 안 함<br>**웜**: 네트워크로 자율 전파, 자가 복제, 독립 프로그램<br>**트로이 목마**: 정상 프로그램 위장, 자가 복제·감염 안 함<br>**랜섬웨어**: 파일 암호화 후 몸값 요구<br>**스파이웨어**: 동의 없이 설치돼 개인정보 수집·유출, 키로거<br>**스캐어웨어**: "겁을 주다(scare)", 가짜 경고로 공포 유발 → 가짜 백신·결제 유도(25-1) | **스스로 퍼지나·복제하나**로 가른다<br>웜: 네트워크로 스스로 전파<br>트로이 목마: 위장, 복제·감염 안 함<br>바이러스: 다른 프로그램에 감염, 스스로 전파는 안 함 | [자세히](@security/악성코드) |
+| 보기로 나온 ~웨어 | 25-1 스캐어웨어 문제의 보기 단어<br>**컴포넌트 웨어**: 재사용 가능한 컴포넌트 기반 소프트웨어<br>**유즈웨어**: 일정 기간·횟수만 무료로 써 보고 결제하는 라이선스 형태<br>**셔블웨어**: 품질 낮은 소프트웨어를 다량으로 끼워 파는 형태<br>**네트웨어**: 노벨(Novell)의 네트워크 운영체제<br>**그룹웨어**: 협업·일정 관리용 업무 소프트웨어<br>**애드웨어**: 광고를 강제로 노출하는 프로그램 | 악성 코드는 스캐어웨어·스파이웨어·랜섬웨어<br>나머지는 소프트웨어 종류·라이선스 이름 | [자세히](@security/악성코드) |
+| DoS 공격 | **랜드 어택**: 출발지와 목적지 주소를 공격 대상 IP로 같게 → 자기 자신에게 응답<br>**스머프**: 출발지를 공격 대상 IP로 변조 + ICMP Echo를 브로드캐스트 → 타깃 마비<br>**티어드롭**: IP Fragment 조각을 깨뜨려 보내 재조립 중 오류<br>**죽음의 핑**: 최대 크기(65,535바이트)를 넘는 ICMP 패킷<br>**SYN 플러딩**: SYN만 보내고 ACK를 안 보내 연결 테이블 고갈(3-way handshake 미완료)<br>**UDP 플러딩**: UDP 패킷 대량 전송으로 대역폭 고갈 | 출발지 = 목적지 → 랜드<br>ICMP + **브로드캐스트** → 스머프, ICMP + **크기** → 죽음의 핑<br>조각(Fragment) → 티어드롭<br>SYN만 → SYN 플러딩 | [자세히](@security/DoS) |
+
 ### 오류 제어
 
 | 주제 | 정리 | 구분 포인트 | |
@@ -80,19 +153,15 @@
 | 주제 | 정리 | 구분 포인트 | |
 |---|---|---|---|
 | ARP · RARP | **ARP**: IP → MAC 변환<br>**RARP**: MAC → IP 변환, ARP의 역기능 | **화살표 방향**<br>ARP: IP를 알고 MAC을 찾음<br>RARP: MAC은 알지만 IP를 모를 때(부팅 시 IP 할당) | [자세히](@network/네트워크계층) |
-| ICMP · NAT | **ICMP**: IP 오류 보고·네트워크 상태 진단, Echo Request/Reply → ping 명령어<br>**NAT**: 사설 IP를 공인 IP로 변환(응답은 다시 사설 IP로), IP 주소 절약, 내부 네트워크 보안 강화 | ICMP: IP에 없는 **오류 보고** 기능을 메움, ping<br>NAT: **주소를 바꿈**(사설 ↔ 공인) | [자세히](@network/네트워크계층) |
-| 가상 회선 · 데이터그램 | **가상 회선**: 논리적인 통신 경로를 미리 설정, 연결형 교환 방식<br>**데이터그램**: 비연결형 교환 방식, 순서에 무관하게 독립적으로 전송, 헤더를 붙여 개별 전달 | 가상 회선: 연결 설정 필요, **고정 경로**, 순서 보장<br>데이터그램: 연결 설정 불필요, **패킷마다 경로 다름**, 순서 보장 안 됨 | [자세히](@network/교환방식) |
+| NAT | 사설 IP를 공인 IP로 변환(응답은 다시 사설 IP로), IP 주소 절약, 내부 네트워크 보안 강화 | **주소를 바꿈**(사설 ↔ 공인) | [자세히](@network/네트워크계층) |
 | HTTP · Hypertext · HTML | **HTTP**: 전송 프로토콜, 요청/응답 처리(GET·POST·PUT), 80번 포트<br>**하이퍼텍스트**: 링크로 다른 문서와 연결되는 텍스트<br>**HTML**: 웹 문서를 만드는 마크업 언어 | HTTP: 보내는 **규약**(프로토콜)<br>Hypertext: 링크로 이어진 **텍스트**<br>HTML: 문서를 만드는 **언어** | [자세히](@network/응용계층) |
-| 프로토콜 3요소 | **구문(Syntax)**: 데이터의 형식·부호화·신호 수준<br>**의미(Semantics)**: 각 비트·필드의 뜻, 제어 정보와 오류 처리<br>**타이밍(Timing)**: 속도 조절과 순서 제어 |  | [자세히](@network/프로토콜의정의) |
 | ATM | 53바이트 고정 길이 셀(헤더 5 + 페이로드 48), 비동기 전송 모드, 고속 스위칭 |  | [자세히](@network/데이터링크) |
-| RIP | 거리 벡터(벨만-포드 알고리즘), 홉 수로 거리 측정, 최대 15홉(16홉부터 도달 불가) |  | [자세히](@network/라우팅) |
 | 애드혹 네트워크 | 인프라 없는 통신, 자율적 네트워크 구성, 중앙 제어 장치 없음 |  | [자세히](@newtech/네트워크신기술) |
 
 ### 인터페이스·웹 서비스
 
 | 주제 | 정리 | 구분 포인트 | |
 |---|---|---|---|
-| IPSec · L2TP | **IPSec**: VPN 기술, 3계층(네트워크), 인증 헤더(AH) + 캡슐화(ESP)로 IP 패킷 암호화<br>**L2TP**: VPN 기술, L2F + PPTP 결합, 2계층(데이터 링크), 터널링만 → 암호화는 IPSec과 결합 | IPSec: **3계층**, 직접 암호화<br>L2TP: **2계층**, 터널링만(암호화는 IPSec과 결합)<br>지문에 "L2F + PPTP"가 보이면 L2TP | [자세히](@sw-dev/인터페이스보안) |
 | SOAP · WSDL | **SOAP**: XML 기반 메시지, 원격 프로시저 호출, 엄격한 규칙의 프로토콜<br>**WSDL**: 웹 서비스 명세, XML 형식, 기능·파라미터·데이터 타입 기술 | 둘 다 XML 기반이라 **동사**로 가른다<br>메시지 교환 → SOAP<br>기술(describe) → WSDL<br>(등록·검색 → UDDI) | [자세히](@sw-dev/웹서비스) |
 | JSON · XML | **JSON**: 가벼운 데이터 형식, 속성-값 쌍, 빠른 교환, REST 주요 형식<br>**XML**: 다목적 마크업 언어(W3C), 태그 직접 정의, 데이터와 표시 방식 분리 | JSON: **key-value 쌍**, 괄호 `{}` `[]`, 주석 없음<br>XML: **태그** `<>` 마크업, 주석 있음, SOAP 웹 서비스 | [자세히](@sw-dev/데이터표현) |
 | AJAX | 비동기 요청, 페이지 새로고침 없이 화면 일부만 갱신 |  | [자세히](@sw-dev/인터페이스통신) |
@@ -103,16 +172,8 @@
 | 주제 | 정리 | 구분 포인트 | |
 |---|---|---|---|
 | MAC · RBAC · DAC | **MAC**(강제적): 시스템이 정한 보안 등급·규칙으로 접근 강제<br>**RBAC**(역할 기반): 사용자에게 할당된 역할에 따라 권한 부여<br>**DAC**(임의적): 데이터 소유자가 직접 권한 관리 (예: chmod) | 한글 단서로 가른다<br>"임의적"·개인 신분 → DAC<br>"강제적"·시스템 규칙 → MAC(MAC 주소 아님)<br>"비임의적"·역할 단위 → RBAC | [자세히](@security/접근통제) |
-| 대칭키 · 비대칭키 | **대칭키**: DES(최초 표준, 56비트), AES(NIST, 128비트), ARIA(국내 국가 표준), SEED(KISA, 128비트)<br>**비대칭키**: RSA(소인수분해), ECC(타원곡선, 짧은 키), 디피-헬만(키 교환) | 대칭키: 같은 키, 빠름<br>비대칭키: 공개키·개인키 분리, 느림, 키 교환 안전<br>AES·ARIA는 숫자가 같으니 NIST → AES, 국내 국가 표준 → ARIA | [자세히](@security/암호알고리즘) |
-| IDEA · Skipjack | **IDEA**: 스위스 개발, 128비트 키, 64비트 블록, 8라운드<br>**Skipjack**: NSA 개발, 음성 암호화, 80비트 키, 64비트 블록 | 스위스·128비트 키·8라운드 → IDEA<br>NSA·음성·80비트 키 → Skipjack (22-2에 한 문제로) | [자세히](@security/암호알고리즘) |
-| MD5 · TKIP | **MD5**: RFC 1321, 128비트 해시, MD4 대체, 현재 충돌 취약<br>**TKIP**: WEP 보완, 패킷별 키 믹싱, MIC 적용, 무선랜 보안 | MD5: **해시** 함수(무결성)<br>TKIP: **무선랜** 보안 프로토콜(WEP 보완) | [자세히](@security/해시) |
 | 3A · SSO | **3A**: 인증(Authentication) → 권한 부여(Authorization) → 계정 관리(Accounting)<br>**SSO**: 한 번 인증으로 여러 서비스에 자동 접속 | 인증(Authen, "어쎈") = 문을 열고 들어감<br>권한 부여(Author, "어떠한") = 어느 방·금고까지 되나<br>순서는 인증 → 권한 부여 → 계정 관리 고정<br>SSO의 목적은 인증(권한 위임은 OAuth) | [자세히](@security/인증기술) |
-| TrustZone · 타이포스쿼팅 | **TrustZone**: ARM 프로세서가 하드웨어로 일반 영역과 보안 영역 분리<br>**타이포스쿼팅**: 주소 오타를 노려 비슷한 도메인을 미리 등록, URL 하이재킹 | TrustZone은 **하드웨어** 보안 기술<br>타이포스쿼팅은 **사용자 오타**를 노림 → DNS를 조작하면 파밍 | [자세히](@security/보안신기술) |
-| 템퍼프루핑 · SIEM | **템퍼프루핑**: 위·변조 감지 시 코드 변형·실행 중단 → 무결성 보호<br>**SIEM**: 보안 로그·이벤트를 한곳에 모아 상관 분석·경고 | 템퍼프루핑: 변조 감지 → **실행 중단**(자기 방어)<br>SIEM: 로그를 **모아서 본다**(탐지), 자동 대응은 SOAR | [자세히](@security/보안솔루션) |
-| 웜 · 트로이 목마 · 바이러스 | **웜**: 네트워크 자율 전파, 자가 복제<br>**트로이 목마**: 정상 프로그램 위장, 자가 복제·감염 안 함<br>**바이러스**: 프로그램을 변형해 감염, 자가 복제, 자율 전파 안 함 | **스스로 퍼지나·복제하나**로 가른다<br>웜: 독립 프로그램, 네트워크로 스스로 전파<br>트로이 목마: 위장, 복제·감염 안 함<br>바이러스: 다른 프로그램에 감염, 스스로 전파는 안 함 | [자세히](@security/악성코드) |
-| 랜드 · 스머프 어택 | **랜드 어택**: 출발지와 목적지 주소를 같게 만든 패킷, 서비스 거부<br>**스머프 어택**: 출발지 주소 변조 + ICMP Echo 브로드캐스트, 타깃 마비 | 출발지 = 목적지 → 랜드<br>ICMP + **브로드캐스트** → 스머프 (ICMP + "크기"면 Ping of Death) | [자세히](@security/DoS) |
-| 루트킷(Rootkit) | root 권한 유지 + 자기 존재 은폐 도구 묶음, ps·ls·netstat 결과 변조 |  | [자세히](@security/시스템공격) |
-| APT | 지능형 지속 위협, 특정 표적을 오래 은밀히 침투, 제로데이·악성코드·사회공학 조합 |  | [자세히](@security/사회공학) |
+| 템퍼프루핑 | 위·변조 감지 시 코드 변형·실행 중단 → 무결성 보호 | 변조 감지 → **실행 중단**(자기 방어), 로그를 모아 보는 건 SIEM | [자세히](@security/보안솔루션) |
 | RTO | Recovery Time Objective, 장애 발생 후 정상 가동까지 허용 시간 | RTO: 정상 가동까지 허용 **시간**<br>RPO: 손실을 허용할 **데이터** 양(시점) | [자세히](@security/보안관리) |
 
 ### SW 설계·개발
@@ -120,7 +181,6 @@
 | 주제 | 정리 | 구분 포인트 | |
 |---|---|---|---|
 | 싱글톤 · 방문자 · 반복자 | **싱글톤(Singleton)**: 생성 패턴, 인스턴스가 오직 하나임을 보장<br>**방문자(Visitor)**: 행위 패턴, 새 기능(연산)만 따로 추가하며 각 클래스를 돌아다님<br>**반복자(Iterator)**: 행위 패턴, 내부 구조를 노출하지 않고 순서대로 접근 | 객체를 **하나만** → 싱글톤(생성)<br>클래스는 그대로 두고 **기능만 추가** → 방문자(행위)<br>내부를 숨기고 **next로 차례로** → 반복자(행위) | [자세히](@sw-design/디자인패턴총론) |
-| 응집도 종류 | 높은 것부터 기능적 → 순차적 → 통신적(교환적) → 절차적 → 시간적 → 논리적 → 우연적 | 응집도는 **높을수록**, 결합도는 **낮을수록** 좋다 | [자세히](@sw-design/모듈응집도) |
 | SOLID | SRP(단일 책임) / OCP(개방-폐쇄) / LSP(리스코프 치환) / ISP(인터페이스 분리) / DIP(의존 역전) | "인터페이스를 쪼갠다" → ISP<br>"클래스의 책임 하나" → SRP | [자세히](@sw-design/객체지향SOLID) |
 | 헤더(릴리스 노트) | 릴리스 노트 자체를 식별: 문서 이름, 제품 이름, 버전 번호, 릴리스 날짜, 참고 날짜, 노트 버전 |  | [자세히](@sw-design/릴리스노트) |
 | NUI | Natural User Interface, 신체 동작·터치·제스처 같은 자연스러운 동작으로 조작 (예: 멀티 터치, Kinect) |  | [자세히](@sw-design/UI종류) |
@@ -131,34 +191,23 @@
 
 | 주제 | 정리 | 구분 포인트 | |
 |---|---|---|---|
-| DB 명령어 분류 | **DDL**: CREATE·ALTER·DROP·TRUNCATE (스키마 정의)<br>**DML**: SELECT·INSERT·UPDATE·DELETE (데이터 조작)<br>**DCL**: GRANT·REVOKE, 국내 시험은 COMMIT·ROLLBACK도 DCL<br>문장마다 붙는 키워드는 바로 아래 표 |  | [자세히](@sql/SQL분류) |
+| DB 명령어 분류 | **DDL**: CREATE·ALTER·DROP·TRUNCATE (스키마 정의)<br>**DML**: SELECT·INSERT·UPDATE·DELETE (데이터 조작)<br>**DCL**: GRANT·REVOKE, 국내 시험은 COMMIT·ROLLBACK도 DCL<br>문장마다 붙는 키워드는 위 「SQL 키워드」와 맨 아래 표 |  | [자세히](@sql/SQL분류) |
 | 로킹(Locking) | 병행 제어 기법, 트랜잭션이 접근하는 데이터 항목을 잠가 동시 접근 제어(상호 배제로 직렬화) |  | [자세히](@db/트랜잭션) |
 | RAID 0 | 스트라이핑, 패리티·중복 없음, 성능 향상, 장애 시 데이터 손실 |  | [자세히](@db/스토리지) |
 | IPC | 프로세스 간 통신: 공유 메모리, 소켓, 세마포어, 메시지 큐, 파이프·시그널 |  | [자세히](@os/프로세스상태) |
 | LOD | Linked Data + Open Data, 공개 데이터를 표준 형식으로 서로 연결한 데이터망 |  | [자세히](@newtech/DB) |
 
-### DB 명령어: 문장마다 붙는 키워드
+### DB 명령어: 나머지 문장 키워드
 
-INTO·SET·CHECK처럼 빈칸으로 나오는 예약어가 어느 문장에 붙는지 모았다. 굵은 글씨가 그 문장에만 붙는 키워드다.
+INTO·USING·CASCADE처럼 빈칸으로 나오는 예약어 가운데, 위 「SQL 키워드」에 없는 문장을 모았다. 굵은 글씨가 그 문장에만 붙는 키워드다.
 
 | 문장 | 모양 | 헷갈리는 점 | |
 |---|---|---|---|
-| 조회 | `SELECT 컬럼 FROM 테이블 WHERE 조건 GROUP BY 컬럼 HAVING 집계조건 ORDER BY 컬럼 DESC` | **WHERE**는 행 조건, **HAVING**은 GROUP BY로 묶은 뒤 집계 조건(COUNT·SUM 등)<br>오름차순 **ASC**(생략 가능), 내림차순 **DESC** | [자세히](@sql/키워드빈칸:SELECT) |
-| 조건 | `LIKE '이%'` · `IN ('컴공','전자')` · `BETWEEN 70 AND 85` · `IS NULL` · `DISTINCT` | **LIKE**: %는 여러 글자, _는 한 글자<br>**BETWEEN**은 양 끝 포함<br>NULL은 `= NULL`이 아니라 **IS NULL** | [자세히](@sql/키워드빈칸:SELECT) |
 | 별칭·조인 | `SUM(급여) AS 합계` · `사원 JOIN 부서 ON 사원.부서번호 = 부서.부서번호` · `JOIN 부서 USING (부서번호)` · `NATURAL JOIN 부서` | **AS**는 생략 가능<br>**ON**: 조인 조건을 직접 씀<br>**USING**: 이름이 같은 컬럼 중 조인할 컬럼만 지정<br>**NATURAL JOIN**: 같은 이름 컬럼으로 자동 동등 조인, 그 컬럼은 한 번만 나옴 | [자세히](@sql/조인·서브쿼리·집합) |
-| 서브쿼리 비교 | `급여 > ALL (SELECT …)` · `급여 > ANY (SELECT …)` · `WHERE EXISTS (SELECT …)` | **ALL**: 모두보다 → 최댓값과 비교<br>**ANY**(=SOME): 하나보다만 → 최솟값과 비교<br>`IN`은 `= ANY`, `NOT IN`은 `<> ALL`<br>**EXISTS**: 값 비교 없이 행이 하나라도 있는지만 | [자세히](@sql/키워드빈칸:SELECT) |
 | 집합 연산 | `SELECT … UNION SELECT …` · `UNION ALL` · `INTERSECT` · `EXCEPT` | **UNION**: 합치고 중복 제거, **UNION ALL**: 중복 남김<br>**INTERSECT**: 양쪽에 다 있는 행<br>**EXCEPT**: 앞에만 있는 행(Oracle은 MINUS)<br>ORDER BY는 맨 뒤에 한 번, 전체에 적용 | [자세히](@sql/조인·서브쿼리·집합) |
 | 삽입 | `INSERT INTO 교수(교수번호, 이름) VALUES (1, '김교수')` | 삽입은 **INSERT INTO** 테이블 **VALUES** (값)<br>컬럼 목록을 생략하면 모든 컬럼을 순서대로<br>VALUES 대신 SELECT를 쓰면 조회 결과를 삽입(괄호 없음) | [자세히](@sql/키워드빈칸:INSERT) |
-| 수정 | `UPDATE 교수 SET 나이 = 46 WHERE 교수번호 = 1` | 수정은 **UPDATE** 테이블 **SET** 컬럼 = 값<br>WHERE가 없으면 전체 행이 바뀐다 | [자세히](@sql/키워드빈칸:INSERT) |
-| 삭제(행) | `DELETE FROM 교수 WHERE 교수번호 = 3` | **DELETE FROM**: WHERE가 없으면 전체 행 삭제, 테이블은 남는다(DML)<br>테이블째 없애는 건 **DROP**(DDL) | [자세히](@sql/키워드빈칸:INSERT) |
-| 테이블 생성·제약조건 | `CREATE TABLE 교수( 교수번호 INT PRIMARY KEY, 이름 TEXT NOT NULL, 이메일 TEXT UNIQUE, 나이 INT CHECK (나이 >= 20), 학과코드 TEXT DEFAULT 'D1', CONSTRAINT fk FOREIGN KEY (학과코드) REFERENCES 학과(학과코드) ON DELETE SET NULL )` | **PRIMARY KEY**: NULL·중복 불가<br>**NOT NULL**: 비울 수 없음<br>**UNIQUE**: 중복만 막고 NULL 허용<br>**CHECK**: 값이 조건식을 만족해야 함<br>**DEFAULT**: 값을 안 주면 넣을 기본값<br>**FOREIGN KEY (컬럼) REFERENCES 부모(컬럼)** 순서 | [자세히](@sql/키워드빈칸:DDL) |
-| CONSTRAINT (제약조건 이름 붙이기) | `CONSTRAINT fk_학과 FOREIGN KEY (학과코드) REFERENCES 학과(학과코드)` · `CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CONSTRAINT 이름** 뒤에 제약조건(FOREIGN KEY·CHECK 등)을 쓴다<br>REFERENCES 뒤에는 부모 **테이블명**, 괄호 안에 부모 **컬럼**<br>26-1에 외래키 문장이 5칸 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
-| 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CREATE DOMAIN**: 값의 범위에 이름을 붙임<br>허용 값은 **CHECK (VALUE IN …)**, 26-2에 CHECK 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
 | 부모 삭제 시 | `ON DELETE CASCADE` · `ON DELETE SET NULL` · `ON DELETE SET DEFAULT` · `ON DELETE RESTRICT` | **CASCADE**: 자식 행도 같이 삭제<br>**SET NULL**: 자식 외래키를 NULL로<br>**SET DEFAULT**: 자식 외래키를 기본값으로<br>**RESTRICT**: 자식이 있으면 삭제 거부 | [자세히](@sql/결과예측:DISTINCT) |
-| 테이블 변경 | `ALTER TABLE 교수 ADD 전화 TEXT` · `ALTER TABLE 교수 DROP COLUMN 전화` · `ALTER TABLE 교수 MODIFY 나이 INT` | 컬럼 추가 **ADD**, 컬럼 삭제 **DROP COLUMN**<br>자료형 변경 **MODIFY**(Oracle·MySQL), 표준은 `ALTER 나이 SET DATA TYPE INT` | [자세히](@sql/키워드빈칸:DDL) |
 | 삭제(객체) | `DROP TABLE 교수 CASCADE` · `DROP VIEW 고령교수` · `DROP INDEX idx_교수_이름` | **CASCADE**: 참조하는 객체까지 함께 삭제, **RESTRICT**: 참조가 있으면 거부<br>**TRUNCATE**는 행을 다 지우지만 분류는 DDL | [자세히](@sql/키워드빈칸:DDL) |
-| 뷰·인덱스 | `CREATE VIEW 고령교수 AS SELECT 이름 FROM 교수 WHERE 나이 >= 45` · `CREATE INDEX idx_교수_이름 ON 교수(이름)` | 뷰는 **AS** + SELECT, 인덱스는 **ON** 테이블(컬럼)<br>뷰는 ALTER로 못 바꾼다 → DROP 뒤 다시 CREATE | [자세히](@sql/뷰·인덱스) |
-| 권한 부여 | `GRANT SELECT ON 학생 TO USER1` · `GRANT UPDATE ON 학생 TO USER1 WITH GRANT OPTION` · `GRANT SELECT ON 학생 TO PUBLIC` | 뼈대 **GRANT 권한 ON 테이블 TO 사용자** (무엇을 → 어디에 → 누구에게)<br>권한 자리: SELECT·INSERT·UPDATE·DELETE·ALL, 그 밖에 ALTER·INDEX·REFERENCES·CREATE<br>**TO PUBLIC**: 모든 사용자에게<br>**WITH GRANT OPTION**(문장 끝): 받은 사람이 남에게 다시 줄 수 있음<br>여러 권한을 묶어 그룹에 주는 단위는 **ROLE** | [자세히](@sql/키워드빈칸:DCL) |
 | 권한 회수 | `REVOKE SELECT ON 학생 FROM USER1` · `REVOKE UPDATE ON 학생 FROM USER1 CASCADE` · `REVOKE GRANT OPTION FOR UPDATE ON 학생 FROM USER1` | 뼈대 **REVOKE 권한 ON 테이블 FROM 사용자** (GRANT는 TO, REVOKE는 FROM: 누구"에게" 주고 누구"로부터" 거둔다)<br>**CASCADE**(문장 끝, REVOKE에만): 그 사용자가 남에게 준 권한까지 연쇄 회수<br>**GRANT OPTION FOR**(REVOKE 바로 뒤): 권한은 두고 재부여 자격만 회수<br>21-3에 `GRANT SELECT ON 학생 TO USER1` 빈칸 | [자세히](@sql/키워드빈칸:DCL) |
 | 트랜잭션 | `COMMIT` · `ROLLBACK` · `SAVEPOINT sp1` · `ROLLBACK TO sp1` | **COMMIT**: 확정, **ROLLBACK**: 마지막 COMMIT 이후 전부 취소<br>**SAVEPOINT**로 중간 지점을 찍고 **ROLLBACK TO**로 그 지점까지만 취소<br>국내 시험은 COMMIT·ROLLBACK도 DCL로 분류 | [자세히](@sql/뷰·인덱스) |
 
