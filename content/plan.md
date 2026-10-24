@@ -158,8 +158,8 @@ INTO·SET·CHECK처럼 빈칸으로 나오는 예약어가 어느 문장에 붙�
 | 테이블 변경 | `ALTER TABLE 교수 ADD 전화 TEXT` · `ALTER TABLE 교수 DROP COLUMN 전화` · `ALTER TABLE 교수 MODIFY 나이 INT` | 컬럼 추가 **ADD**, 컬럼 삭제 **DROP COLUMN**<br>자료형 변경 **MODIFY**(Oracle·MySQL), 표준은 `ALTER 나이 SET DATA TYPE INT` | [자세히](@sql/키워드빈칸:DDL) |
 | 삭제(객체) | `DROP TABLE 교수 CASCADE` · `DROP VIEW 고령교수` · `DROP INDEX idx_교수_이름` | **CASCADE**: 참조하는 객체까지 함께 삭제, **RESTRICT**: 참조가 있으면 거부<br>**TRUNCATE**는 행을 다 지우지만 분류는 DDL | [자세히](@sql/키워드빈칸:DDL) |
 | 뷰·인덱스 | `CREATE VIEW 고령교수 AS SELECT 이름 FROM 교수 WHERE 나이 >= 45` · `CREATE INDEX idx_교수_이름 ON 교수(이름)` | 뷰는 **AS** + SELECT, 인덱스는 **ON** 테이블(컬럼)<br>뷰는 ALTER로 못 바꾼다 → DROP 뒤 다시 CREATE | [자세히](@sql/뷰·인덱스) |
-| 권한 부여 | `GRANT SELECT ON 학생 TO USER1 WITH GRANT OPTION` | **GRANT … ON … TO**<br>**WITH GRANT OPTION**: 받은 권한을 남에게 다시 줄 수 있음 | [자세히](@sql/키워드빈칸:DCL) |
-| 권한 회수 | `REVOKE UPDATE ON 학생 FROM USER1 CASCADE` | **REVOKE … ON … FROM** (GRANT는 TO, REVOKE는 FROM)<br>**CASCADE**: USER1이 남에게 준 권한까지 회수 | [자세히](@sql/키워드빈칸:DCL) |
+| 권한 부여 | `GRANT SELECT ON 학생 TO USER1` · `GRANT UPDATE ON 학생 TO USER1 WITH GRANT OPTION` · `GRANT SELECT ON 학생 TO PUBLIC` | 뼈대 **GRANT 권한 ON 테이블 TO 사용자** (무엇을 → 어디에 → 누구에게)<br>권한 자리: SELECT·INSERT·UPDATE·DELETE·ALL, 그 밖에 ALTER·INDEX·REFERENCES·CREATE<br>**TO PUBLIC**: 모든 사용자에게<br>**WITH GRANT OPTION**(문장 끝): 받은 사람이 남에게 다시 줄 수 있음<br>여러 권한을 묶어 그룹에 주는 단위는 **ROLE** | [자세히](@sql/키워드빈칸:DCL) |
+| 권한 회수 | `REVOKE SELECT ON 학생 FROM USER1` · `REVOKE UPDATE ON 학생 FROM USER1 CASCADE` · `REVOKE GRANT OPTION FOR UPDATE ON 학생 FROM USER1` | 뼈대 **REVOKE 권한 ON 테이블 FROM 사용자** (GRANT는 TO, REVOKE는 FROM: 누구"에게" 주고 누구"로부터" 거둔다)<br>**CASCADE**(문장 끝, REVOKE에만): 그 사용자가 남에게 준 권한까지 연쇄 회수<br>**GRANT OPTION FOR**(REVOKE 바로 뒤): 권한은 두고 재부여 자격만 회수<br>21-3에 `GRANT SELECT ON 학생 TO USER1` 빈칸 | [자세히](@sql/키워드빈칸:DCL) |
 | 트랜잭션 | `COMMIT` · `ROLLBACK` · `SAVEPOINT sp1` · `ROLLBACK TO sp1` | **COMMIT**: 확정, **ROLLBACK**: 마지막 COMMIT 이후 전부 취소<br>**SAVEPOINT**로 중간 지점을 찍고 **ROLLBACK TO**로 그 지점까지만 취소<br>국내 시험은 COMMIT·ROLLBACK도 DCL로 분류 | [자세히](@sql/뷰·인덱스) |
 
 ### 메모와 다른 점
