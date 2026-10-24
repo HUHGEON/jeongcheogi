@@ -61,31 +61,31 @@
 
 ## 최근 안 나온 개념
 
-2020~2022년쯤 나오고 최근에는 잠잠한 개념을 한곳에 모았다. 주제 목록은 따로 정리해 둔 메모를 따랐고, 설명은 이 사이트 각 개념 페이지의 정리를 옮겼다. 「자세히」를 누르면 그 개념 전체가 열린다.
+단답으로 한 번씩 묻는 개념을 한곳에 모았다. 설명은 이 사이트 각 개념 페이지의 정리를 옮겼고, 「자세히」를 누르면 그 개념 전체가 열린다.
 
 [📌 최근 안 나온 개념](#m/recent)
 
 :::m recent 최근 안 나온 개념
-주제는 메모의 63개를 하나도 빼지 않았고, 같이 묻거나 서로 헷갈리는 것끼리는 한 줄로 묶었다. 설명은 이 사이트 개념 페이지의 정리를 옮겼다(메모와 다른 곳은 아래 「메모와 다른 점」).
+같이 묻거나 서로 헷갈리는 개념끼리는 한 줄로 묶었다. 설명은 이 사이트 개념 페이지의 정리를 옮겼고, 「자세히」를 누르면 그 개념 전체가 열린다.
 
 ### 오류 제어
 
 | 주제 | 정리 | |
 |---|---|---|
 | FEC · BEC | **FEC**(순방향 오류 수정): 재전송 요구 없이 수신 측이 스스로 수정, 해밍 코드<br>**BEC**(역방향 오류 수정): 오류 감지 후 송신 측에 재전송 요청 | [자세히](@network/오류제어) |
-| 해밍 · 패리티 · CRC | **해밍 코드**: FEC 방식, 오류 위치 검출·수정, 패리티 비트, 2의 거듭제곱 위치<br>**패리티 검사**: 1비트 추가, 짝수/홀수 개수 검증<br>**CRC**(순환 중복 검사): 다항식 코드, 집단 오류 검출 | [자세히](@network/오류제어) |
+| 해밍 · 패리티 · CRC | **해밍 코드**: FEC 방식, 2의 거듭제곱 위치에 패리티 비트, 오류 위치를 찾아 단일 비트 오류 수정<br>**패리티 검사**: 1비트 추가, 짝수/홀수 개수 검증<br>**CRC**(순환 중복 검사): 다항식 코드, 집단 오류 검출 | [자세히](@network/오류제어) |
 
 ### 네트워크
 
 | 주제 | 정리 | |
 |---|---|---|
 | ARP · RARP | **ARP**: IP → MAC 변환<br>**RARP**: MAC → IP 변환, ARP의 역기능 | [자세히](@network/네트워크계층) |
-| ICMP · NAT | **ICMP**: IP 오류 보고·네트워크 상태 진단, Echo Request/Reply → ping 명령어<br>**NAT**: 사설 IP ↔ 공인 IP 변환, IPv4 주소 절약, 내부망 보호 | [자세히](@network/네트워크계층) |
-| 가상 회선 · 데이터그램 | **가상 회선**: 논리적 통신 경로를 미리 설정, 연결형 패킷 교환<br>**데이터그램**: 비연결형, 패킷마다 독립적으로 경로 선택·전송 | [자세히](@network/교환방식) |
-| HTTP · Hypertext · HTML | **HTTP**: 웹 문서를 주고받는 전송 프로토콜, 80번 포트<br>**하이퍼텍스트**: 링크로 다른 문서와 연결되는 텍스트<br>**HTML**: 웹 문서를 만드는 마크업 언어 | [자세히](@network/응용계층) |
-| 프로토콜 3요소 | **구문(Syntax)**: 형식·부호화<br>**의미(Semantics)**: 제어 정보·오류 처리<br>**타이밍(Timing)**: 속도·순서 | [자세히](@network/프로토콜의정의) |
+| ICMP · NAT | **ICMP**: IP 오류 보고·네트워크 상태 진단, Echo Request/Reply → ping 명령어<br>**NAT**: 사설 IP를 공인 IP로 변환(응답은 다시 사설 IP로), IP 주소 절약, 내부 네트워크 보안 강화 | [자세히](@network/네트워크계층) |
+| 가상 회선 · 데이터그램 | **가상 회선**: 논리적인 통신 경로를 미리 설정, 연결형 교환 방식<br>**데이터그램**: 비연결형 교환 방식, 순서에 무관하게 독립적으로 전송, 헤더를 붙여 개별 전달 | [자세히](@network/교환방식) |
+| HTTP · Hypertext · HTML | **HTTP**: 전송 프로토콜, 요청/응답 처리(GET·POST·PUT), 80번 포트<br>**하이퍼텍스트**: 링크로 다른 문서와 연결되는 텍스트<br>**HTML**: 웹 문서를 만드는 마크업 언어 | [자세히](@network/응용계층) |
+| 프로토콜 3요소 | **구문(Syntax)**: 데이터의 형식·부호화·신호 수준<br>**의미(Semantics)**: 각 비트·필드의 뜻, 제어 정보와 오류 처리<br>**타이밍(Timing)**: 속도 조절과 순서 제어 | [자세히](@network/프로토콜의정의) |
 | ATM | 53바이트 고정 길이 셀(헤더 5 + 페이로드 48), 비동기 전송 모드, 고속 스위칭 | [자세히](@network/데이터링크) |
-| RIP | 거리 벡터(벨만-포드), 홉 수로 거리 측정, 최대 15홉 | [자세히](@network/라우팅) |
+| RIP | 거리 벡터(벨만-포드 알고리즘), 홉 수로 거리 측정, 최대 15홉(16홉부터 도달 불가) | [자세히](@network/라우팅) |
 | 애드혹 네트워크 | 인프라 없는 통신, 자율적 네트워크 구성, 중앙 제어 장치 없음 | [자세히](@newtech/네트워크신기술) |
 
 ### 인터페이스·웹 서비스
@@ -94,7 +94,7 @@
 |---|---|---|
 | IPSec · L2TP | **IPSec**: VPN 기술, 3계층(네트워크), 인증 헤더(AH) + 캡슐화(ESP)로 IP 패킷 암호화<br>**L2TP**: VPN 기술, L2F + PPTP 결합, 2계층(데이터 링크), 터널링만 → 암호화는 IPSec과 결합 | [자세히](@sw-dev/인터페이스보안) |
 | SOAP · WSDL | **SOAP**: XML 기반 메시지, 원격 프로시저 호출, 엄격한 규칙의 프로토콜<br>**WSDL**: 웹 서비스 명세, XML 형식, 기능·파라미터·데이터 타입 기술 | [자세히](@sw-dev/웹서비스) |
-| JSON · XML | **JSON**: 가벼운 데이터 형식(속성-값), 빠른 교환, REST 주요 형식<br>**XML**: 다목적 마크업 언어(W3C), 태그 직접 정의, 데이터와 표시 방식 분리 | [자세히](@sw-dev/데이터표현) |
+| JSON · XML | **JSON**: 가벼운 데이터 형식, 속성-값 쌍, 빠른 교환, REST 주요 형식<br>**XML**: 다목적 마크업 언어(W3C), 태그 직접 정의, 데이터와 표시 방식 분리 | [자세히](@sw-dev/데이터표현) |
 | AJAX | 비동기 요청, 페이지 새로고침 없이 화면 일부만 갱신 | [자세히](@sw-dev/인터페이스통신) |
 | EAI 구축 유형 | **Point-to-Point**: 1:1 직접 연결<br>**Hub & Spoke**: 중앙 허브 경유<br>**Message Bus**: 공통 버스(미들웨어)<br>**Hybrid**: 그룹 내부는 허브, 그룹 간은 버스 | [자세히](@sw-dev/EAI) |
 
@@ -123,7 +123,7 @@
 | 응집도 종류 | 높은 것부터 기능적 → 순차적 → 통신적(교환적) → 절차적 → 시간적 → 논리적 → 우연적 | [자세히](@sw-design/모듈응집도) |
 | SOLID | SRP(단일 책임) / OCP(개방-폐쇄) / LSP(리스코프 치환) / ISP(인터페이스 분리) / DIP(의존 역전) | [자세히](@sw-design/객체지향SOLID) |
 | 헤더(릴리스 노트) | 릴리스 노트 자체를 식별: 문서 이름, 제품 이름, 버전 번호, 릴리스 날짜, 참고 날짜, 노트 버전 | [자세히](@sw-design/릴리스노트) |
-| NUI | Natural User Interface, 음성·제스처·표정 등 자연스러운 표현으로 상호작용 | [자세히](@sw-design/UI종류) |
+| NUI | Natural User Interface, 신체 동작·터치·제스처 같은 자연스러운 동작으로 조작 (예: 멀티 터치, Kinect) | [자세히](@sw-design/UI종류) |
 | 형상 관리 도구 | CVS, SVN, Git | [자세히](@sw-dev/형상관리) |
 | 살충제 패러독스 | 같은 테스트를 반복하면 새 결함을 찾기 어려움 → 주기적으로 케이스 검토·갱신 | [자세히](@sw-dev/테스트7원칙) |
 
@@ -132,7 +132,7 @@
 | 주제 | 정리 | |
 |---|---|---|
 | DB 명령어 분류 | **DDL**: CREATE·ALTER·DROP·TRUNCATE (스키마 정의)<br>**DML**: SELECT·INSERT·UPDATE·DELETE (데이터 조작)<br>**DCL**: GRANT·REVOKE, 국내 시험은 COMMIT·ROLLBACK도 DCL<br>문장마다 붙는 키워드는 바로 아래 표 | [자세히](@sql/SQL분류) |
-| 로킹(Locking) | 병행 제어, 데이터 항목을 잠가 상호 배제로 직렬화 | [자세히](@db/트랜잭션) |
+| 로킹(Locking) | 병행 제어 기법, 트랜잭션이 접근하는 데이터 항목을 잠가 동시 접근 제어(상호 배제로 직렬화) | [자세히](@db/트랜잭션) |
 | RAID 0 | 스트라이핑, 패리티·중복 없음, 성능 향상, 장애 시 데이터 손실 | [자세히](@db/스토리지) |
 | IPC | 프로세스 간 통신: 공유 메모리, 소켓, 세마포어, 메시지 큐, 파이프·시그널 | [자세히](@os/프로세스상태) |
 | LOD | Linked Data + Open Data, 공개 데이터를 표준 형식으로 서로 연결한 데이터망 | [자세히](@newtech/DB) |
@@ -148,9 +148,9 @@ INTO·SET·CHECK처럼 빈칸으로 나오는 예약어가 어느 문장에 붙�
 | 별칭·조인 | `SUM(급여) AS 합계` · `사원 JOIN 부서 ON 사원.부서번호 = 부서.부서번호` · `JOIN 부서 USING (부서번호)` · `NATURAL JOIN 부서` | **AS**는 생략 가능<br>**ON**: 조인 조건을 직접 씀<br>**USING**: 이름이 같은 컬럼 중 조인할 컬럼만 지정<br>**NATURAL JOIN**: 같은 이름 컬럼으로 자동 동등 조인, 그 컬럼은 한 번만 나옴 | [자세히](@sql/조인·서브쿼리·집합) |
 | 서브쿼리 비교 | `급여 > ALL (SELECT …)` · `급여 > ANY (SELECT …)` · `WHERE EXISTS (SELECT …)` | **ALL**: 모두보다 → 최댓값과 비교<br>**ANY**(=SOME): 하나보다만 → 최솟값과 비교<br>`IN`은 `= ANY`, `NOT IN`은 `<> ALL`<br>**EXISTS**: 값 비교 없이 행이 하나라도 있는지만 | [자세히](@sql/키워드빈칸:SELECT) |
 | 집합 연산 | `SELECT … UNION SELECT …` · `UNION ALL` · `INTERSECT` · `EXCEPT` | **UNION**: 합치고 중복 제거, **UNION ALL**: 중복 남김<br>**INTERSECT**: 양쪽에 다 있는 행<br>**EXCEPT**: 앞에만 있는 행(Oracle은 MINUS)<br>ORDER BY는 맨 뒤에 한 번, 전체에 적용 | [자세히](@sql/조인·서브쿼리·집합) |
-| 삽입 | `INSERT INTO 교수(교수번호, 이름) VALUES (1, '김교수')` | **INTO** + **VALUES**는 삽입에만<br>VALUES 대신 SELECT를 쓰면 조회 결과를 통째로 삽입 | [자세히](@sql/키워드빈칸:INSERT) |
-| 수정 | `UPDATE 교수 SET 나이 = 46 WHERE 교수번호 = 1` | **SET**은 수정, FROM을 쓰지 않는다<br>WHERE가 없으면 전체 행이 바뀐다 | [자세히](@sql/키워드빈칸:INSERT) |
-| 삭제(행) | `DELETE FROM 교수 WHERE 교수번호 = 3` | **DELETE FROM**: 컬럼 이름을 안 쓴다, 행만 지우고 테이블은 남는다(DML)<br>테이블째 없애는 건 **DROP**(DDL) | [자세히](@sql/키워드빈칸:INSERT) |
+| 삽입 | `INSERT INTO 교수(교수번호, 이름) VALUES (1, '김교수')` | 삽입은 **INSERT INTO** 테이블 **VALUES** (값)<br>컬럼 목록을 생략하면 모든 컬럼을 순서대로<br>VALUES 대신 SELECT를 쓰면 조회 결과를 삽입(괄호 없음) | [자세히](@sql/키워드빈칸:INSERT) |
+| 수정 | `UPDATE 교수 SET 나이 = 46 WHERE 교수번호 = 1` | 수정은 **UPDATE** 테이블 **SET** 컬럼 = 값<br>WHERE가 없으면 전체 행이 바뀐다 | [자세히](@sql/키워드빈칸:INSERT) |
+| 삭제(행) | `DELETE FROM 교수 WHERE 교수번호 = 3` | **DELETE FROM**: WHERE가 없으면 전체 행 삭제, 테이블은 남는다(DML)<br>테이블째 없애는 건 **DROP**(DDL) | [자세히](@sql/키워드빈칸:INSERT) |
 | 테이블 생성·제약조건 | `CREATE TABLE 교수( 교수번호 INT PRIMARY KEY, 이름 TEXT NOT NULL, 이메일 TEXT UNIQUE, 나이 INT CHECK (나이 >= 20), 학과코드 TEXT DEFAULT 'D1', CONSTRAINT fk FOREIGN KEY (학과코드) REFERENCES 학과(학과코드) ON DELETE SET NULL )` | **PRIMARY KEY**: NULL·중복 불가<br>**NOT NULL**: 비울 수 없음<br>**UNIQUE**: 중복만 막고 NULL 허용<br>**CHECK**: 값이 조건식을 만족해야 함<br>**DEFAULT**: 값을 안 주면 넣을 기본값<br>**FOREIGN KEY (컬럼) REFERENCES 부모(컬럼)** 순서 | [자세히](@sql/키워드빈칸:DDL) |
 | CONSTRAINT (제약조건 이름 붙이기) | `CONSTRAINT fk_학과 FOREIGN KEY (학과코드) REFERENCES 학과(학과코드)` · `CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CONSTRAINT 이름** 뒤에 제약조건(FOREIGN KEY·CHECK 등)을 쓴다<br>REFERENCES 뒤에는 부모 **테이블명**, 괄호 안에 부모 **컬럼**<br>26-1에 외래키 문장이 5칸 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
 | 도메인 | `CREATE DOMAIN 성별 CHAR(1) DEFAULT '남' CONSTRAINT 성별제약 CHECK (VALUE IN ('남','여'))` | **CREATE DOMAIN**: 값의 범위에 이름을 붙임<br>허용 값은 **CHECK (VALUE IN …)**, 26-2에 CHECK 빈칸으로 나왔다 | [자세히](@sql/키워드빈칸:DDL) |
@@ -162,11 +162,4 @@ INTO·SET·CHECK처럼 빈칸으로 나오는 예약어가 어느 문장에 붙�
 | 권한 회수 | `REVOKE SELECT ON 학생 FROM USER1` · `REVOKE UPDATE ON 학생 FROM USER1 CASCADE` · `REVOKE GRANT OPTION FOR UPDATE ON 학생 FROM USER1` | 뼈대 **REVOKE 권한 ON 테이블 FROM 사용자** (GRANT는 TO, REVOKE는 FROM: 누구"에게" 주고 누구"로부터" 거둔다)<br>**CASCADE**(문장 끝, REVOKE에만): 그 사용자가 남에게 준 권한까지 연쇄 회수<br>**GRANT OPTION FOR**(REVOKE 바로 뒤): 권한은 두고 재부여 자격만 회수<br>21-3에 `GRANT SELECT ON 학생 TO USER1` 빈칸 | [자세히](@sql/키워드빈칸:DCL) |
 | 트랜잭션 | `COMMIT` · `ROLLBACK` · `SAVEPOINT sp1` · `ROLLBACK TO sp1` | **COMMIT**: 확정, **ROLLBACK**: 마지막 COMMIT 이후 전부 취소<br>**SAVEPOINT**로 중간 지점을 찍고 **ROLLBACK TO**로 그 지점까지만 취소<br>국내 시험은 COMMIT·ROLLBACK도 DCL로 분류 | [자세히](@sql/뷰·인덱스) |
 
-### 메모와 다른 점
-
-- **해밍 코드**: 메모에는 "송신 측에 재전송을 요구"로 적혀 있지만, 그건 BEC 설명이다. 해밍 코드는 재전송 없이 수신 측이 오류 위치를 찾아 고치는 FEC 방식이다.
-- **패리티·CRC**: 메모에서는 해밍 밑에 있지만 둘 다 오류 검출 방식이다. 패리티는 1비트를 더해 짝수/홀수만 확인하고, CRC는 다항식으로 집단 오류를 검출한다.
-- **DAC**: 메모에는 "신분 기반"으로 적혀 있다. 이 사이트에서는 "데이터 소유자가 직접 권한을 관리"한다로 정리했고, 교재에 따라 신분 기반 접근 통제라고도 부른다.
-- **IPSec**: 메모의 "기밀성을 보장하는 암호화"가 ESP(캡슐화 보안 페이로드)다.
-- **RTO**: Objective는 "목표"라는 뜻이다(메모의 Time-Object가 아니다).
 :::m-end
